@@ -16,6 +16,7 @@ uniform vec3 spotLightDir;
 uniform vec3 colorground;
 uniform float zeit;
 uniform mat4 view_matrix;
+uniform samplerCube sky;
 
 
 in struct VertexData

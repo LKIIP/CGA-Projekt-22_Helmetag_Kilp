@@ -18,10 +18,17 @@ import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.lwjgl.opengl.GL11.*
 import org.joml.*
+import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.ARBInternalformatQuery2.GL_TEXTURE_CUBE_MAP
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL12.*
+import org.lwjgl.opengl.GL13
+import org.lwjgl.opengl.GL13.*
+import org.lwjgl.stb.STBImage
+import org.lwjgl.stb.STBImage.stbi_image_free
+import org.lwjgl.stb.STBImage.stbi_load
+import java.nio.ByteBuffer
 import java.util.*
 
 
@@ -46,12 +53,12 @@ class Scene(private val window: GameWindow) {
     private val pointLight4 : PointLight
     private val spotLight : SpotLight
     private val pointList: MutableList<PointLight> = arrayListOf()
-    private val skyboxList: MutableList<String> = arrayListOf("assets/textures/skybox/back.jpg",
-            "assets/textures/skybox/bottom.jpg",
-            "assets/textures/skybox/front.jpg",
-            "assets/textures/skybox/left.jpg",
-            "assets/textures/skybox/right.jpg",
-            "assets/textures/skybox/top.jpg")
+    private val skyboxList: MutableList<String> = arrayListOf("assets/textures/skybox/left.jpg",
+        "assets/textures/skybox/right.jpg",
+        "assets/textures/skybox/top.jpg",
+        "assets/textures/skybox/bottom.jpg",
+        "assets/textures/skybox/back.jpg",
+        "assets/textures/skybox/front.jpg")
 
     val groundRes : OBJLoader.OBJResult = OBJLoader.loadOBJ("assets/models/ground.obj")
     val groundMeshList : MutableList<OBJLoader.OBJMesh> = groundRes.objects[0].meshes
@@ -80,8 +87,9 @@ class Scene(private val window: GameWindow) {
     //scene setup
     init {
 
-         xPosition  = 0.0
-         yPosition  = 0.0
+        xPosition  = 0.0
+        yPosition  = 0.0
+
         staticShader = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
         skyboxShader = ShaderProgram("assets/shaders/skybox_vert.glsl", "assets/shaders/skybox_frag.glsl")
         toonShader = ShaderProgram("assets/shaders/toon_vert.glsl", "assets/shaders/toon_frag.glsl")
@@ -104,6 +112,8 @@ class Scene(private val window: GameWindow) {
         val attrPosSkybox =  VertexAttribute(3, GL_FLOAT, 12, 0) //position
         val vertexAttributesSkybox = arrayOf<VertexAttribute>(attrPosSkybox)
 
+        //Cubemap-Test
+        loadCube(skyboxShader, skyboxList)
 
         groundEmit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
         groundDiff.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
@@ -116,6 +126,8 @@ class Scene(private val window: GameWindow) {
         meshListHead.add(meshHead)
 
         head = Renderable(meshListHead)
+        head.translate(Vector3f(0f, -2f, 0f))
+
 
         meshSkybox = Mesh(skyboxMeshList[0].vertexData, skyboxMeshList[0].indexData, vertexAttributesG)
         meshListSkybox.add(meshSkybox)
@@ -144,31 +156,61 @@ class Scene(private val window: GameWindow) {
 
     }
 
+    fun loadCube(shaderProgram: ShaderProgram, faces: MutableList<String>){
+
+        val cubeID = glGenTextures()
+        GL11.glBindTexture(GL_TEXTURE_CUBE_MAP, cubeID)
+
+        val a = BufferUtils.createIntBuffer(6)
+        val b = BufferUtils.createIntBuffer(6)
+        val channels = BufferUtils.createIntBuffer(6)
+        var data: ByteBuffer?
+        var i = 0
+        STBImage.stbi_set_flip_vertically_on_load(false)
+
+        faces.forEach{
+            data = STBImage.stbi_load(it, a, b, channels, 4)
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, a.get(), b.get(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
+            STBImage.stbi_image_free(data)
+            i++
+        }
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        glActiveTexture(5)
+        shaderProgram.setUniformInt("sky", 5)
+
+    }
+
     fun render(dt: Float, t: Float) {
-        //glEnable(GL_CULL_FACE); GLError.checkThrow()
-        toonShader.use()
+        staticShader.use()
         staticShader.setUniformVec3("colorground", Vector3f(0.01f, 1.0f, 0.01f))
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-        cam.bind(toonShader)
-        spotLight.bind(toonShader, cam.getCalculateViewMatrix())
-        //staticShader.use()
-        ground.render(toonShader)
-        staticShader.setUniformFloat("zeit", t)
+        cam.bind(staticShader)
+
+        ground.render(staticShader)
         var i = 0
+        spotLight.bind(staticShader, cam.getCalculateViewMatrix())
         pointList.forEach{
             it.bindList(staticShader, cam.getCalculateViewMatrix(), i)
             it.bindList(toonShader, cam.getCalculateViewMatrix(), i)
             i++
         }
-        head.render(toonShader)
-        bike?.render(toonShader)
-        staticShader.setUniformFloat("zeit", 1f)
+        bike?.render(staticShader)
 
-        //glDisable(GL_CULL_FACE); GLError.checkThrow()
-       // skyboxShader.use()
-        //skyboxTex.bind(3)
-        //skyboxShader.setUniformInt("skybox", 3)
-        //skybox.render(skyboxShader)
+        //Skybox render
+        GL11.glDepthMask(false)
+        glDisable(GL_CULL_FACE)
+        skyboxShader.use()
+        skyboxShader.setUniformMat("view_sky", Matrix4f(Matrix3f(cam.getCalculateViewMatrix())), false)
+        cam.bind(skyboxShader)
+        skybox.render(skyboxShader)
+        glEnable(GL_CULL_FACE)
+        glDepthMask(true)
 
     }
 
