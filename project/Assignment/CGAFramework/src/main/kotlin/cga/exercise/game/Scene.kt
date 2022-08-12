@@ -40,6 +40,7 @@ class Scene(private val window: GameWindow) {
     private val staticShader: ShaderProgram
     private val skyboxShader: ShaderProgram
     private val toonShader: ShaderProgram
+
     private val meshG: Mesh
     private val meshSkybox: Mesh
     private val meshS : Mesh
@@ -47,6 +48,10 @@ class Scene(private val window: GameWindow) {
     private val meshListG : MutableList<Mesh> = arrayListOf()
     private val meshListSkybox : MutableList<Mesh> = arrayListOf()
     private val cam : TronCamera
+    private val cam1 : TronCamera
+    private val cam2 : TronCamera
+    private val cam3 : TronCamera
+
     private val pointLight : PointLight
     private val pointLight1 : PointLight
     private val pointLight2 : PointLight
@@ -66,10 +71,25 @@ class Scene(private val window: GameWindow) {
     val skyboxRes : OBJLoader.OBJResult = OBJLoader.loadOBJ("assets/models/skybox.obj")
     val skyboxMeshList : MutableList<OBJLoader.OBJMesh> = skyboxRes.objects[0].meshes
 
+    private val objects : MutableList<Renderable?> = ArrayList()
+    private var enemyCount: Int = 10
+    private var enemyCountMax: Int = 10
+    private var camState = 0;
+    private var pressOk : Boolean = true;
+    private var pressSpace : Boolean = true;
+    private var invinFrame : Boolean = false;
+    private var invinFrameBuffer : Boolean = false;
+    private var tempT : Float = 0f;
+    private var x : Int = 0
+
+
+
     val sphereRes : OBJLoader.OBJResult = OBJLoader.loadOBJ("assets/models/sphere.obj")
     val sphereMeshList : MutableList<OBJLoader.OBJMesh> = sphereRes.objects[0].meshes
 
     private var bike: Renderable? = ModelLoader.loadModel("assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj",-90f,89.52f,-0.45f)
+    private var bikeTest: Renderable? = ModelLoader.loadModel("assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj",0f,0f,0f)
+    private var bulletTest: Renderable? = ModelLoader.loadModel("assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj",0f,0f,0f)
     private var groundDiff : Texture2D = Texture2D.invoke("assets/textures/ground_diff.png", true)
     private var groundEmit :Texture2D = Texture2D.invoke("assets/textures/ground_emit.png", true)
     private var groundSpec :Texture2D = Texture2D.invoke("assets/textures/ground_spec.png", true)
@@ -118,7 +138,7 @@ class Scene(private val window: GameWindow) {
         groundSpec.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
         meshG = Mesh(groundMeshList[0].vertexData, groundMeshList[0].indexData, vertexAttributesG, groundMaterial)
         meshListG.add(meshG)
-        ground  = Renderable(meshListG)
+        ground  = Renderable(meshListG, hp = 30000000)
 
         meshSkybox = Mesh(skyboxMeshList[0].vertexData, skyboxMeshList[0].indexData, vertexAttributesG)
         meshListSkybox.add(meshSkybox)
@@ -134,10 +154,31 @@ class Scene(private val window: GameWindow) {
         skybox.scale(Vector3f(30f))
 
         bike?.scale((Vector3f(0.8f)))
+        bike?.hp = 10
+        bike?.hitbox = 1f
+        bikeTest?.translate(Vector3f(10f, 0f, 10f))
+        bikeTest?.hp = 3
+        bikeTest?.hitbox = 1f
+        bulletTest?.scale(Vector3f(0.2f))
+        bulletTest?.parent = bike
+        bulletTest?.translate(Vector3f(0f,1f,-15f))
+        bulletTest?.hitbox
+        objects.add(bikeTest)
+        objects.add(bike)
+        objects.add(bulletTest)
         cam = TronCamera( _parent = bike)
+        cam1 = TronCamera( _parent = bike)
+        cam2 = TronCamera( _parent = bike)
+        cam3 = TronCamera()
 
-        cam.rotate(Math.toRadians(-35f), 0f, 0f)
-        cam.translate(Vector3f(0f, 0f, 4f))
+        cam.rotate(Math.toRadians(-15f), 0f, 0f)
+        cam.translate(Vector3f(0f, 2f, 0f))
+        cam1.rotate(Math.toRadians(-15f), 0f, 0f)
+        cam1.translate(Vector3f(0f, 2f, 4f))
+        cam2.rotate(Math.toRadians(-15f), 0f, 0f)
+        cam2.translate(Vector3f(0f, 2f, 7f))
+        cam3.rotate(Math.toRadians(270f), 0f, 0f)
+        cam3.translate(Vector3f(0f, 0f, 20f))
 
         pointLight = PointLight(Vector3f(-50f ,0f, -50f), Vector3f(0f, 0f, 0f))
         pointLight1 = PointLight(Vector3f(50f ,0f, -50f), Vector3f(0f, 0f, 0f))
@@ -190,6 +231,62 @@ class Scene(private val window: GameWindow) {
 //
 //    }
 
+    fun hitboxCalc(renderable: Renderable?) : Boolean{
+        objects.forEach {
+            if (renderable != null) {
+                if (it != null) {
+                    if(renderable != it){
+                        if(!(renderable == bulletTest && it == bike)||(renderable == bike && it == bulletTest) ) {
+                            if (renderable.getWorldPosition().x + renderable.hitbox <= it.getWorldPosition().x + it.hitbox && renderable.getWorldPosition().x + renderable.hitbox >= it.getWorldPosition().x - it.hitbox || renderable.getWorldPosition().x - renderable.hitbox <= it.getWorldPosition().x + it.hitbox && renderable.getWorldPosition().x - renderable.hitbox >= it.getWorldPosition().x - it.hitbox) {
+
+                                if (renderable.getWorldPosition().y + renderable.hitbox <= it.getWorldPosition().y + it.hitbox && renderable.getWorldPosition().y + renderable.hitbox >= it.getWorldPosition().y - it.hitbox || renderable.getWorldPosition().y - renderable.hitbox <= it.getWorldPosition().y + it.hitbox && renderable.getWorldPosition().y - renderable.hitbox >= it.getWorldPosition().y - it.hitbox) {
+
+                                    if (renderable.getWorldPosition().z + renderable.hitbox <= it.getWorldPosition().z + it.hitbox && renderable.getWorldPosition().z + renderable.hitbox >= it.getWorldPosition().z - it.hitbox || renderable.getWorldPosition().z - renderable.hitbox <= it.getWorldPosition().z + it.hitbox && renderable.getWorldPosition().z - renderable.hitbox >= it.getWorldPosition().z - it.hitbox) {
+                                        println("Kollision")
+                                        if (renderable == bulletTest) {
+                                            it.hp--
+                                            println(it.hp)
+                                            if(it.hp < 1){
+                                                deleteEnemy(it)
+                                            }
+                                        }
+                                        return false
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        return true
+    }
+
+    fun deleteEnemy(renderable: Renderable?){
+        objects.remove(renderable)
+        renderable?.scale(Vector3f(0.2f))
+        enemyCount = enemyCount - 1
+        if(enemyCount > 1){
+            spawnEnemys()
+        }
+    }
+
+    fun spawnEnemys(){
+        enemyCountMax = enemyCountMax +2
+        enemyCount = enemyCountMax
+        val tempEnemys : Int = enemyCount
+        while (tempEnemys > 0){
+            spawnEnemyRandom()
+        }
+    }
+
+    fun spawnEnemyRandom(){
+
+    }
+
     fun render(dt: Float, t: Float) {
         staticShader.use()
         staticShader.setUniformVec3("colorground", Vector3f(0.01f, 1.0f, 0.01f))
@@ -206,6 +303,8 @@ class Scene(private val window: GameWindow) {
         bike?.render(staticShader)
         ground.render(staticShader)
         sphere.render(staticShader)
+        bikeTest?.render(staticShader)
+        bulletTest?.render(staticShader)
 
         //Skybox render
         GL11.glDepthMask(false)
@@ -221,29 +320,120 @@ class Scene(private val window: GameWindow) {
     }
 
     fun update(dt: Float, t: Float) {
+        if(invinFrame == true && invinFrameBuffer == true){
+            tempT = t + 2
+            invinFrameBuffer = false
+        }
 
-        if(window.getKeyState(GLFW.GLFW_KEY_W) && window.getKeyState(GLFW.GLFW_KEY_A)) {
-            bike?.rotate(0f,dt,0f)
-            bike?.translate(Vector3f(0f, 0f, -dt*5))}
+        if(t >= tempT){
+            invinFrame = false
+        }
 
-        if(window.getKeyState(GLFW.GLFW_KEY_W) && window.getKeyState(GLFW.GLFW_KEY_D)) {
-            bike?.rotate(0f,-dt,0f)
-            bike?.translate(Vector3f(0f, 0f, -dt*5))}
+        if(bike?.hp!! <= 0){
+            cleanup()
+        }
 
-        if(window.getKeyState(GLFW.GLFW_KEY_S) && window.getKeyState(GLFW.GLFW_KEY_A)) {
-            bike?.rotate(0f,dt,0f)
-            bike?.translate(Vector3f(0f, 0f, dt*5))}
 
-        if(window.getKeyState(GLFW.GLFW_KEY_S) && window.getKeyState(GLFW.GLFW_KEY_D)) {
-            bike?.rotate(0f,-dt,0f)
-            bike?.translate(Vector3f(0f, 0f, dt*5))}
+        if (window.getKeyState(GLFW.GLFW_KEY_W)){bike?.translate(Vector3f(0f, 0f, - 0.1f))
 
-        if (window.getKeyState(GLFW.GLFW_KEY_W)){bike?.translate(Vector3f(0f, 0f, -dt * 10))}
-        if (window.getKeyState(GLFW.GLFW_KEY_S)){bike?.translate(Vector3f(0f, 0f, dt * 10))}
-        if (window.getKeyState(GLFW.GLFW_KEY_A)){bike?.rotate(0f,dt,0f)
-            bike?.translate(Vector3f(0f, 0f, -dt*2))}
-        if (window.getKeyState(GLFW.GLFW_KEY_D)){bike?.rotate(0f,-dt,0f)
-            bike?.translate(Vector3f(0f, 0f, -dt*2))}
+            if(hitboxCalc(bike) == false){
+                bike?.translate(Vector3f(0f, 0f,  0.1f))
+
+                if(invinFrame == false){
+                    bike?.hp = bike?.hp?.minus(1)!!
+                    invinFrame = true
+                    invinFrameBuffer = true
+                }
+                println(bike?.hp!!)
+                println(t)
+                println(tempT)
+
+            }}
+
+        if (window.getKeyState(GLFW.GLFW_KEY_S)){bike?.translate(Vector3f(0f, 0f,  0.05f))
+
+            if(hitboxCalc(bike) == false){
+                bike?.translate(Vector3f(0f, 0f,  -0.05f))
+                if(invinFrame == false){
+                    bike?.hp = bike?.hp?.minus(1)!!
+                    invinFrame = true
+                    invinFrameBuffer = true
+                }
+
+            }}
+
+        if (window.getKeyState(GLFW.GLFW_KEY_D)){bike?.translate(Vector3f(0.05f, 0f,  0f))
+
+            if(hitboxCalc(bike) == false){
+                bike?.translate(Vector3f(-0.05f, 0f,  0f))
+                if(invinFrame == false){
+                    bike?.hp = bike?.hp?.minus(1)!!
+                    invinFrame = true
+                    invinFrameBuffer = true
+                }
+
+            }}
+
+        if (window.getKeyState(GLFW.GLFW_KEY_A)){bike?.translate(Vector3f(-0.05f, 0f,  0f))
+
+            if(hitboxCalc(bike) == false){
+                bike?.translate(Vector3f(0.05f, 0f,  0f))
+                if(invinFrame == false){
+                    bike?.hp = bike?.hp?.minus(1)!!
+                    invinFrame = true
+                    invinFrameBuffer = true
+                }
+            }}
+
+        if(window.getKeyState(GLFW.GLFW_KEY_SPACE) && pressSpace == true){
+            pressSpace = false
+
+
+            while (x < 250) {
+                bulletTest?.translate(Vector3f(0f, 0f, - 0.2f))
+                if(hitboxCalc(bulletTest) == false){
+                    return
+                }
+                x++
+                println(x)
+
+
+            }
+        }
+
+        if(!window.getKeyState(GLFW.GLFW_KEY_SPACE)){
+            pressSpace = true
+            bulletTest?.translate(Vector3f(0f, 0f,  x * 0.2f))
+            x = 0
+        }
+
+        if(camState == 3){
+            if (window.getKeyState(GLFW.GLFW_KEY_DOWN)){cam3.translate(Vector3f(0f, -dt * 20, 0f)) }
+            if (window.getKeyState(GLFW.GLFW_KEY_UP)){cam3.translate(Vector3f(0f, dt * 20, 0f)) }
+            if (window.getKeyState(GLFW.GLFW_KEY_LEFT)){cam3.translate(Vector3f(-dt * 20f, 0f, 0f))}
+            if (window.getKeyState(GLFW.GLFW_KEY_RIGHT)){cam3.translate(Vector3f(dt * 20f, 0f, 0f))}
+        }
+
+        if(window.getKeyState(GLFW.GLFW_KEY_PAGE_DOWN) && pressOk == true){
+
+            pressOk = false
+            if(camState != 3){
+
+                camState = camState + 1
+            }
+
+        }
+
+        if(!window.getKeyState(GLFW.GLFW_KEY_PAGE_DOWN) && !window.getKeyState(GLFW.GLFW_KEY_PAGE_UP)){pressOk = true}
+
+        if(window.getKeyState(GLFW.GLFW_KEY_PAGE_UP)&& pressOk == true){
+            pressOk = false
+            if(camState !=0){
+
+                camState = camState - 1
+            }
+
+        }
 
     }
 
@@ -251,10 +441,21 @@ class Scene(private val window: GameWindow) {
 
     fun onMouseMove(xpos: Double, ypos: Double) {
 
-        var dxpos: Double = xPosition - xpos
-        cam.rotateAroundPoint(0.0f, (dxpos.toFloat() * 0.002f),0f, bike!!.getYAxis())
-        xPosition = xpos
-        yPosition = ypos
+        if(camState != 3) {
+            var dxpos: Double = xPosition - xpos
+
+            bike!!.rotate(0.0f, (dxpos.toFloat() * 0.002f), 0f)
+
+            xPosition = xpos
+            yPosition = ypos
+        }
+
+        if(camState == 3) {
+            var dxpos: Double = xPosition - xpos
+            cam3.rotateAroundPoint(0.0f, (dxpos.toFloat() * 0.002f), 0f, bike!!.getYAxis())
+            xPosition = xpos
+            yPosition = ypos
+        }
 
     }
 
