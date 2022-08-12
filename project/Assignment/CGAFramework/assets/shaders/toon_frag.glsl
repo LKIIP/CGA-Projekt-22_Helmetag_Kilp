@@ -41,16 +41,28 @@ uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 out vec4 color;
 
+
 vec3 calculatePointLight(int i) {
 
     //geometric data
     vec3 fragmentLight = normalize(pointLights[i].lp - vertexData.p).xyz;
+    vec3 fragmentLightBike = normalize(pointLights[0].lp - vertexData.p).xyz;
 
     // get lighting level
     float level = max(0.0, dot(vertexData.normal, fragmentLight));
+    //float levelBike = max(0.0, dot(vertexData.normal, fragmentLightBike));
     // quantize the level into, say, 4 levels
-    level = floor(level * 4) / 4;
-    vec3 result = pointLights[i].lightCol * vec3(1, 0, 0) * level;
+    //levelBike = floor(levelBike * 16)/16;
+    level = floor(level * 8) / 8;
+    vec3 result = (pointLights[i].lightCol  * vec3(0,1,1) * level) ;
+
+    //if(levelBike <= 0.75){ result *= (pointLights[0].lightCol * vec3(0.5,0,1) * levelBike);}
+
+    if (level <=1){result = pointLights[i].lightCol * vec3(0,1,1 ) * level;}
+//    if (level <=0.80){result = pointLights[i].lightCol * vec3(0,1,0 ) * level ;}
+    if (level <=0.50){result = pointLights[i].lightCol * vec3(0,0.5,1 ) * level ;}
+//    if (level <=0.40){result = pointLights[i].lightCol * vec3(0,0,1) * level;}
+//    if (level <=0.20){result = pointLights[i].lightCol * vec3(1,0,1) * level;}
 
     return result;
 
@@ -58,14 +70,14 @@ vec3 calculatePointLight(int i) {
 
 void main() {
     //ambient
-    vec3 temp = 0.2 * vec3(1, 0, 0) ;
+    vec3 temp = 0.2 * vec3(1, 1, 1) ;
 
     //lighting
     for (int i = 0; i < NR_POINT_LIGHTS; i++) {
         temp += calculatePointLight(i);
     }
 
-    color = vec4(temp, 1.0);
+    color = vec4(temp, 1.0) * 0.25;
 }
 
 

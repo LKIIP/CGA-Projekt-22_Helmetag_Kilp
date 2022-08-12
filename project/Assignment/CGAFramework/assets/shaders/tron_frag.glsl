@@ -108,14 +108,6 @@ void main(){
     vec3 spectexSRGB = texture(spec,vertexData.textureCoord).rgb;
     vec3 difftexSRGB = texture(diff, vertexData.textureCoord).rgb;
 
-    emittexSRGB *= colorground;
-    vec3 colorg = colorground;
-    vec3 bikecol = emittexSRGB;
-    if (zeit != 1 && (emittexSRGB.g > 0 || emittexSRGB.r > 0 || emittexSRGB.b > 0)){
-        bikecol =  vec3(0.7+(sin(zeit)/2), 0 , 0.7+(sin(zeit)/2));
-        emittexSRGB = bikecol;
-
-    }
 
     float gamma = 2.2;
     vec3 emittex = linear(emittexSRGB, gamma);
@@ -123,16 +115,11 @@ void main(){
     vec3 difftex = linear(difftexSRGB, gamma);
 
     //Ambient
-    vec3 ambient = calcAmbient(difftex, pointLights[0].lightCol*0.01);
+    vec3 ambient = calcAmbient(difftex, vec3(0.2, 0.0, 0.6)*0.01);
 
-    // Bike Point Light
-    vec3 toLight = (pointLights[0].lp - vertexData.p).xyz;
-    float attenuationPL = calcAttenuation(length(toLight), pointLights[0].attenuations);
-    vec3 diffSpecPL = calcDiffSpec(vertexData.normal, toLight,vertexData.toCamera,  difftex,  spectex, shininess );
-    vec3 pointLightCol = attenuationPL * (vec3(sin(zeit)/2, 0, sin(zeit)/2));
-    vec3 res = diffSpecPL * pointLightCol;
+    vec3 res = vec3(0, 0 , 0);
 
-     for(int i = 1; i < NR_POINT_LIGHTS; i++) {
+     for(int i = 0; i < NR_POINT_LIGHTS; i++) {
         vec3 toLight = (pointLights[i].lp - vertexData.p).xyz;
         vec3 mulpointLightCol = pointLightColor(pointLights[i], vertexData.normal, toLight, vertexData.toCamera,
         difftex,  spectex, shininess, length(toLight), pointLights[i].attenuations);
