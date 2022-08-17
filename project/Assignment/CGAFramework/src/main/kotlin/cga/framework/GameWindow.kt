@@ -164,7 +164,7 @@ abstract class GameWindow(
      * Tells the application to quit.
      * shutdown() is called after the last simulation step has completed.
      */
-    protected fun quit() {
+     fun quit() {
         GLFW.glfwSetWindowShouldClose(m_window, true)
     }
 
