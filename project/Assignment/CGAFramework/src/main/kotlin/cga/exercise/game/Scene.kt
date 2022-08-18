@@ -82,12 +82,12 @@ class Scene(private val window: GameWindow) {
     private val pointLight4 : PointLight
     private val spotLight : SpotLight
     private val pointList: MutableList<PointLight> = arrayListOf()
-    private val skyboxList: MutableList<String> = arrayListOf("assets/textures/skybox/left.png",
-        "assets/textures/skybox/right.png",
-        "assets/textures/skybox/top.png",
-        "assets/textures/skybox/bottom.png",
-        "assets/textures/skybox/back.png",
-        "assets/textures/skybox/front.png")
+    private val skyboxList: MutableList<String> = arrayListOf("assets/textures/skybox/left.jpg",
+        "assets/textures/skybox/right.jpg",
+        "assets/textures/skybox/top.jpg",
+        "assets/textures/skybox/bottom.jpg",
+        "assets/textures/skybox/back.jpg",
+        "assets/textures/skybox/front.jpg")
 
 //    val groundRes : OBJLoader.OBJResult = OBJLoader.loadOBJ("assets/level/level.obj")
 //    val groundMeshList : MutableList<OBJLoader.OBJMesh> = groundRes.objects[0].meshes
@@ -106,6 +106,7 @@ class Scene(private val window: GameWindow) {
     private var pressSpace : Boolean = true;
     private var invinFrame : Boolean = false;
     private var invinFrameBuffer : Boolean = false;
+    private var doNothing : Boolean = false;
     private var tempT : Float = 0f;
     private var x : Int = 0
 
@@ -470,6 +471,7 @@ class Scene(private val window: GameWindow) {
 
     }
 
+
     fun enemyWalk(renderable: Renderable?){
 
 
@@ -605,7 +607,9 @@ class Scene(private val window: GameWindow) {
             window.quit()
         }
 
-        enemys.forEach { enemyWalk(it) }
+        if(doNothing == false) {
+            enemys.forEach { enemyWalk(it) }
+        }
 
         enemys.forEach {
             var xxx : Vector3f = (player?.getWorldPosition()!!.min(it?.getWorldPosition()) )
@@ -723,6 +727,10 @@ class Scene(private val window: GameWindow) {
                 camState = camState - 1
             }
 
+        }
+
+        if(window.getKeyState(GLFW.GLFW_KEY_P)){
+            doNothing = true
         }
 
     }
