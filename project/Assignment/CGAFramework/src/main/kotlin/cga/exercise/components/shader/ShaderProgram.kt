@@ -5,6 +5,8 @@ import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30
+import org.lwjgl.opengl.GL32.GL_GEOMETRY_SHADER
+import org.lwjgl.opengl.GL32.glCompileShader
 import java.nio.FloatBuffer
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -12,7 +14,7 @@ import java.nio.file.Paths
 /**
  * Created by Fabian on 16.09.2017.
  */
-class ShaderProgram(vertexShaderPath: String, fragmentShaderPath: String) {
+class ShaderProgram(vertexShaderPath: String, fragmentShaderPath: String, geometryShaderPath: String?) {
     private var programID: Int = 0
     //Matrix buffers for setting matrix uniforms. Prevents allocation for each uniform
     private val m4x4buf: FloatBuffer = BufferUtils.createFloatBuffer(16)
@@ -120,17 +122,23 @@ class ShaderProgram(vertexShaderPath: String, fragmentShaderPath: String) {
     init {
         val vPath = Paths.get(vertexShaderPath)
         val fPath = Paths.get(fragmentShaderPath)
+        val gPath = Paths.get(geometryShaderPath)
         val vSource = String(Files.readAllBytes(vPath))
         val fSource = String(Files.readAllBytes(fPath))
+        val gSource = String(Files.readAllBytes((gPath)))
         val vShader = GL20.glCreateShader(GL20.GL_VERTEX_SHADER)
         if (vShader == 0) throw Exception("Vertex shader object couldn't be created.")
         val fShader = GL20.glCreateShader(GL20.GL_FRAGMENT_SHADER)
+        val gShader = GL20.glCreateShader(GL_GEOMETRY_SHADER)
+
+
         if (fShader == 0) {
             GL20.glDeleteShader(vShader)
             throw Exception("Fragment shader object couldn't be created.")
         }
         GL20.glShaderSource(vShader, vSource)
         GL20.glShaderSource(fShader, fSource)
+        GL20.glShaderSource(gShader, gSource)
         GL20.glCompileShader(vShader)
         if (GL20.glGetShaderi(vShader, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
             val log = GL20.glGetShaderInfoLog(vShader)
@@ -145,26 +153,38 @@ class ShaderProgram(vertexShaderPath: String, fragmentShaderPath: String) {
             GL20.glDeleteShader(vShader)
             throw Exception("Fragment shader compilation failed:\n$log")
         }
+
+        glCompileShader(gShader)
+        if (GL20.glGetShaderi(gShader, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
+            val log = GL20.glGetShaderInfoLog(gShader)
+            throw Exception("Geometry shader compilation failed:\n$log")
+        }
         programID = GL20.glCreateProgram()
         if (programID == 0) {
             GL20.glDeleteShader(vShader)
             GL20.glDeleteShader(fShader)
+            GL20.glDeleteShader(gShader)
             throw Exception("Program object creation failed.")
         }
         GL20.glAttachShader(programID, vShader)
+        GL20.glAttachShader(programID, gShader)
         GL20.glAttachShader(programID, fShader)
         GL20.glLinkProgram(programID)
         if (GL20.glGetProgrami(programID, GL20.GL_LINK_STATUS) == GL11.GL_FALSE) {
             val log = GL20.glGetProgramInfoLog(programID)
             GL20.glDetachShader(programID, vShader)
             GL20.glDetachShader(programID, fShader)
+            GL20.glDetachShader(programID, gShader)
             GL20.glDeleteShader(vShader)
             GL20.glDeleteShader(fShader)
+            GL20.glDeleteShader(gShader)
             throw Exception("Program linking failed:\n$log")
         }
         GL20.glDetachShader(programID, vShader)
         GL20.glDetachShader(programID, fShader)
+        GL20.glDetachShader(programID, gShader)
         GL20.glDeleteShader(vShader)
         GL20.glDeleteShader(fShader)
+        GL20.glDeleteShader(gShader)
     }
 }

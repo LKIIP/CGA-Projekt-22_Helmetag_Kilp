@@ -16,10 +16,30 @@ uniform vec3 spotLightDir;
 uniform vec3 colorground;
 uniform float zeit;
 uniform mat4 view_matrix;
-uniform samplerCube sky;
+uniform samplerCube depthMap;
+uniform float far_plane;
+
+bool shadows = true;
+
+vec3 offsets[25] = vec3[]
+(
+    vec3(0,0,0),  vec3(0, 1, 1), vec3(0, -1, 1),
+    vec3(0,-1,-1), vec3(0,1,-1), vec3(0,0,-1),
+    vec3(0,0,1), vec3(0,-1,0), vec3(0,-1,0),
+
+    vec3(1,0,0),                 vec3(1, -1, 1),
+    vec3(1,-1,-1), vec3(1,1,-1), vec3(1,0,-1),
+    vec3(1,0,1), vec3(1,-1,0), vec3(1,1,0),
+
+    vec3(-1,0,0),  vec3(-1,1,1), vec3(-1,-1,1),
+                    vec3(-1,1,-1), vec3(-1,0,-1),
+    vec3(-1,0,1), vec3(-1,-1,0), vec3(-1,1,0)
+
+);
 
 
-in struct VertexData
+
+in struct FragmentData
 {
     vec3 toCamera;
     vec3 toLight;
@@ -27,7 +47,7 @@ in struct VertexData
     vec3 normal;
     vec2 textureCoord;
     vec4 p;
-} vertexData;
+} fragmentData;
 
 struct PointLight{
     vec3 lightPos;
@@ -36,7 +56,7 @@ struct PointLight{
     vec4 lp;
 };
 
-#define NR_POINT_LIGHTS 5
+#define NR_POINT_LIGHTS 1
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 out vec4 color;
@@ -45,39 +65,63 @@ out vec4 color;
 vec3 calculatePointLight(int i) {
 
     //geometric data
-    vec3 fragmentLight = normalize(pointLights[i].lp - vertexData.p).xyz;
-    vec3 fragmentLightBike = normalize(pointLights[0].lp - vertexData.p).xyz;
+    vec3 fragmentLight = normalize(pointLights[i].lp - fragmentData.p).xyz;
+    vec3 emit = texture(emit, fragmentData.textureCoord).rgb;
 
     // get lighting level
-    float level = max(0.0, dot(vertexData.normal, fragmentLight));
-    //float levelBike = max(0.0, dot(vertexData.normal, fragmentLightBike));
-    // quantize the level into, say, 4 levels
-    //levelBike = floor(levelBike * 16)/16;
-    level = floor(level * 8) / 8;
-    vec3 result = (pointLights[i].lightCol  * vec3(0,1,1) * level) ;
-
-    //if(levelBike <= 0.75){ result *= (pointLights[0].lightCol * vec3(0.5,0,1) * levelBike);}
-
-    if (level <=1){result = pointLights[i].lightCol * vec3(0,1,1 ) * level;}
-//    if (level <=0.80){result = pointLights[i].lightCol * vec3(0,1,0 ) * level ;}
-    if (level <=0.50){result = pointLights[i].lightCol * vec3(0,0.5,1 ) * level ;}
-//    if (level <=0.40){result = pointLights[i].lightCol * vec3(0,0,1) * level;}
-//    if (level <=0.20){result = pointLights[i].lightCol * vec3(1,0,1) * level;}
+    float level = max(0.0, dot(fragmentData.normal, fragmentLight));
+    level = floor(level * 4) / 4;
+    vec3 result = (pointLights[i].lightCol  * level);
 
     return result;
 
 }
 
+float shadowCalc(vec3 fragPos){
+    vec3 lightToFrag = fragPos - pointLights[0].lp.xyz;
+    float lenLightToFrag = length(lightToFrag);
+    lightToFrag = normalize(lightToFrag);
+
+    // PCF (Percentage closer filtering)
+    float shadow = 0.0;
+    float bias = 0.15;
+    int samples = 25;
+
+    // größerer radius = mehr blur
+    float radius = 1.0 / 500.0;
+    radius *= clamp(length(pointLights[0].lp.xyz - fragPos), 0.2, 6);
+
+    for (int i = 0; i < samples; ++i){
+        float depth = texture(depthMap, lightToFrag + offsets[i] * radius).r;
+        depth *= far_plane;
+        shadow += ((depth + bias) < lenLightToFrag) ? 0.0 : 1.0;
+    }
+
+    return shadow / float(samples);
+}
+
+vec3 calcAmbient(vec3 difftex , vec3 colorAmbient){
+    vec3 ambient = (difftex * colorAmbient);
+    return ambient;
+}
+
 void main() {
+
     //ambient
-    vec3 temp = 0.2 * vec3(1, 1, 1) ;
+    vec3 temp = 0.2 * vec3(0.4, 0.4, 0.4);
+
+    vec3 ambient = calcAmbient(texture(diff, fragmentData.textureCoord).rgb, vec3(0.4, 0.2, 0.8) * 0.1);
+
+    float shadow = shadows ? shadowCalc(fragmentData.p.xyz) : 1.0;
 
     //lighting
     for (int i = 0; i < NR_POINT_LIGHTS; i++) {
         temp += calculatePointLight(i);
     }
 
-    color = vec4(temp, 1.0) * 0.25;
+    vec3 res = temp;
+
+    color = vec4(res, 1.0);
 }
 
 

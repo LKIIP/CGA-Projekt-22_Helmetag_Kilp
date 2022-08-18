@@ -174,6 +174,6 @@ object ModelLoader {
                     materials[model.meshes[i].materialIndex]))
         }
         // assemble the renderable
-        return Renderable(meshes, null, 30000)
+        return Renderable(meshes, materials, textures, null, 30000)
     }
 }

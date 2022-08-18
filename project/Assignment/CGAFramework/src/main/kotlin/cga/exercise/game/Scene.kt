@@ -16,13 +16,21 @@ import cga.framework.ModelLoader
 import cga.framework.OBJLoader
 import org.joml.Matrix4f
 import org.joml.Vector3f
+import org.lwjgl.opengl.GL11.*
 import org.joml.*
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW
+import org.lwjgl.opengl.ARBFramebufferObject.*
 import org.lwjgl.opengl.ARBInternalformatQuery2.GL_TEXTURE_CUBE_MAP
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL12.*
+import org.lwjgl.opengl.GL13
 import org.lwjgl.opengl.GL13.*
+import org.lwjgl.opengl.GL32.glFramebufferTexture
 import org.lwjgl.stb.STBImage
+import org.lwjgl.stb.STBImage.stbi_image_free
+import org.lwjgl.stb.STBImage.stbi_load
+import org.lwjgl.system.MemoryUtil.NULL
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.math.atan2
@@ -32,18 +40,35 @@ import kotlin.math.atan2
  * Created by Fabian on 16.09.2017.
  */
 class Scene(private val window: GameWindow) {
+
+    private var depthCubeMap :Int
     private val staticShader: ShaderProgram
     private val skyboxShader: ShaderProgram
     private val toonShader: ShaderProgram
+    private val ssaoGeoShader: ShaderProgram
+    private val shadowShader: ShaderProgram
+    private val shaderList: MutableList<ShaderProgram> = arrayListOf()
+    private val shadowTransform : MutableList<Matrix4f> = arrayListOf()
 
-    private val meshG: Mesh
-    private val meshE : Mesh
+    private var depthMap : Int =-1
+    private var depthMapFBO : Int = -1
+    private val SHADOW_WIDTH :Int
+    private val SHADOW_HEIGHT: Int
+    private val lightProjection : Matrix4f
+    private val lightView : Matrix4f
+    private val lightSpaceMatrix : Matrix4f
+    private val ShadowProj: Matrix4f
+//    private val meshG: Mesh
+//    private val meshE : Mesh
     private val meshSkybox: Mesh
     private val meshS : Mesh
     private val meshListS : MutableList<Mesh> = arrayListOf()
+    private val meshListTree : MutableList<Mesh> = arrayListOf()
     private val meshListG : MutableList<Mesh> = arrayListOf()
     private val meshListE : MutableList<Mesh> = arrayListOf()
     private val meshListSkybox : MutableList<Mesh> = arrayListOf()
+
+    private val MeshListLevel  : MutableList<Mesh> = arrayListOf()
     private val cam : TronCamera
     private val cam1 : TronCamera
     private val cam2 : TronCamera
@@ -106,6 +131,8 @@ class Scene(private val window: GameWindow) {
     private var enemy10: Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var enemy11: Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
 
+    private var skyboy: Renderable? = ModelLoader.loadModel("assets/models/skybox.obj", 0f, 0f, 0f)
+
     private var bulletTest: Renderable? = ModelLoader.loadModel("assets/Boxing Glove/bxglvsp(right).obj",0f,0f,0f)
     private var groundDiff : Texture2D = Texture2D.invoke("assets/textures/ground_diff.png", true)
     private var groundEmit :Texture2D = Texture2D.invoke("assets/textures/ground_emit.png", true)
@@ -118,14 +145,12 @@ class Scene(private val window: GameWindow) {
     private var enemyMaterial = Material(enemyDiff, enemyEmit, enemySpec, 240f, Vector2f(64f, 64f))
 
     private var ground : Renderable = ModelLoader.loadModel("assets/level/level.obj", 0f, 0f, 0f)!!
-    private var skybox : Renderable
-    private var sphere: Renderable
+//    private var skybox : Renderable
+//    private var sphere: Renderable
     //private var sphere : Renderable
 
     private var xPosition : Double
     private var yPosition : Double
-
-
 
     //scene setup
     init {
@@ -133,9 +158,20 @@ class Scene(private val window: GameWindow) {
         xPosition  = 0.0
         yPosition  = 0.0
 
-        staticShader = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
-        skyboxShader = ShaderProgram("assets/shaders/skybox_vert.glsl", "assets/shaders/skybox_frag.glsl")
-        toonShader = ShaderProgram("assets/shaders/toon_vert.glsl", "assets/shaders/toon_frag.glsl")
+
+
+
+        staticShader = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl", "assets/shaders/geometry.glsl")
+        skyboxShader = ShaderProgram("assets/shaders/skybox_vert.glsl", "assets/shaders/skybox_frag.glsl", "assets/shaders/geometry_skybox.glsl")
+        toonShader = ShaderProgram("assets/shaders/toon_vert.glsl", "assets/shaders/toon_frag.glsl", "assets/shaders/geometry.glsl")
+        ssaoGeoShader = ShaderProgram("assets/shaders/ssao_geovert.glsl", "assets/shaders/ssao_geofrag.glsl", "assets/shaders/geometry.glsl")
+        shadowShader = ShaderProgram("assets/shaders/shadow_vert.glsl", "assets/shaders/shadow_frag.glsl", "assets/shaders/shadow_geometry.glsl")
+
+        shaderList.add(staticShader)
+        shaderList.add(toonShader)
+        shaderList.add(staticShader)
+        shaderList.add(shadowShader)
+
 
         //initial opengl state
         glClearColor (0.0f , 0.0f , 0.0f , 1.0f); GLError . checkThrow ()
@@ -170,25 +206,23 @@ class Scene(private val window: GameWindow) {
         enemyEmit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
         enemyDiff.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
         enemySpec.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
-        meshG = Mesh(groundMeshList[0].vertexData, groundMeshList[0].indexData, vertexAttributesG, groundMaterial)
-        meshE = Mesh(enemyMeshList[0].vertexData, enemyMeshList[0].indexData, vertexAttributesG, enemyMaterial)
-        meshListE.add(meshE)
-        meshListG.add(meshG)
-        ground  = Renderable(meshListG, hp = 30000000)
-        enemy00 = Renderable(meshListE, hp = 0)
+//        meshG = Mesh(groundMeshList[0].vertexData, groundMeshList[0].indexData, vertexAttributesG, groundMaterial)
+//        meshE = Mesh(enemyMeshList[0].vertexData, enemyMeshList[0].indexData, vertexAttributesG, enemyMaterial)
+//        meshListE.add(meshE)
+//        meshListG.add(meshG)
+//        ground  = Renderable(meshListG, hp = 30000000)
+//        enemy00 = Renderable(meshListE, hp = 0)
 
         meshSkybox = Mesh(skyboxMeshList[0].vertexData, skyboxMeshList[0].indexData, vertexAttributesG)
         meshListSkybox.add(meshSkybox)
 
         meshS = Mesh(sphereMeshList[0].vertexData, sphereMeshList[0].indexData, vertexAttributesG)
         meshListS.add(meshS)
-        sphere = Renderable(meshListS, null, 30000)
 
-        sphere.scale(Vector3f(2f))
-        sphere.translate(Vector3f(15f, 10f, 15f))
 
-        skybox = Renderable(meshListSkybox, null, 30000)
-        skybox.scale(Vector3f(30f))
+//        skybox = Renderable(meshListSkybox, null, 30000)
+//        skybox.scale(Vector3f(30f))
+        skyboy?.scale(Vector3f(30f))
 
         player?.scale((Vector3f(0.8f)))
         player?.hp = 10
@@ -231,18 +265,133 @@ class Scene(private val window: GameWindow) {
         pointLight1 = PointLight(Vector3f(50f ,0f, -50f), Vector3f(0f, 0f, 0f))
         pointLight2 = PointLight(Vector3f(50f ,0f, 50f), Vector3f(0f, 0f, 0f))
         pointLight3 = PointLight(Vector3f(-50f ,0f, 50f), Vector3f(0f, 0f, 0f))
-        pointLight4 = PointLight(Vector3f(15f ,10f, 15f), Vector3f(0.5f, 0f, 1f))
+        pointLight4 = PointLight(Vector3f(0f ,20f, 0f), Vector3f(0.5f, 0.33f, 0.25f))
         pointList.add(pointLight4)
-        pointList.add(pointLight)
-        pointList.add(pointLight1)
-        pointList.add(pointLight2)
-        pointList.add(pointLight3)
-        //pointList.add(pointLight4)
+//        pointList.add(pointLight)
+//        pointList.add(pointLight1)
+//        pointList.add(pointLight2)
+//        pointList.add(pointLight3)
         spotLight = SpotLight(Vector3f(0f, 1f, -0.5f), Vector3f(1f, 0f, 0f), 20f, 10f, _parent = player)
         spotLight.rotate(Math.toRadians(-20f), 0f, 0f)
 
+        // SSAO G-Buffer zeug
+
+//        for (i in 64 downTo  0){
+//
+//            var sample  = Vector3f(Random.nextFloat() * 2.0f - 1.0f, Random.nextFloat() * 2.0f - 1.0f, Random.nextFloat())
+//            sample = sample.normalize()
+//            sample = sample.mul(Random.nextFloat())
+//            var scale : Float = i.toFloat() / 64f
+//            scale = lerp(0.1f, 1.0f, scale * scale)
+//            sample = sample.mul(scale)
+//            ssaoGeoShader.setUniformVec3("samples[" + i + "]", sample)
+//        }
+//
+//        var ssaoNoise : MutableList<Vector3f> = arrayListOf()
+//        ssaoNoise.add(Vector3f(0f))
+//        ssaoNoise.add(Vector3f(0f))
+//        for ( i in 16 downTo 0){
+//                    ssaoNoise.add(Vector3f(Random.nextFloat() * 2 - 1, Random.nextFloat() * 2 - 1, 0f))
+//            }
+//
+//        var noiseTexture = glGenTextures()
+//        GL11.glBindTexture(GL_TEXTURE_2D, noiseTexture)
+//        GL11.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 4, 4, 0, GL_RGB, GL_FLOAT, ssaoVec)
+//
+//        val gBuffer = glGenFramebuffers()
+//        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer)
+//
+//        val gPosition = glGenTextures()
+//        glBindTexture(GL_TEXTURE_2D, gPosition);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, window.framebufferWidth, window.framebufferHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//
+//        val gNormal = glGenTextures()
+//        glBindTexture(GL_TEXTURE_2D, gNormal);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, window.framebufferWidth, window.framebufferHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+//
+//        val gAlbedoSpec  = glGenTextures()
+//        glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window.framebufferWidth, window.framebufferHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
+//
+//        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+        // Shadows
+
+        depthMapFBO = glGenFramebuffers() ;  SHADOW_WIDTH = 1024;  SHADOW_HEIGHT = 1024
+        lightProjection = Matrix4f().ortho(-10f, 10f, -10f, 10f, 1f, 7.5f)
+        lightView = Matrix4f().lookAt(Vector3f(-2f, 4f, -1f),
+                                        Vector3f(0f, 0f, 0f),
+                                        Vector3f(0f, 1f, 0f))
+
+        lightSpaceMatrix = lightProjection.mul(lightView)
+
+         depthCubeMap = glGenTextures()
+        GL11.glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap)
+        for (i in 5 downTo 0){
+            GL11.glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + 1, 0, GL_DEPTH_COMPONENT,
+                                1024, 1024, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL)
+        }
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        GL13.glActiveTexture(11)
+        GL11.glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap)
+        toonShader.setUniformInt("depthMap", 11)
+
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO)
+
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubeMap, 0)
+        glDrawBuffer(GL_NONE)
+        glReadBuffer(GL_NONE)
+
+        val aspect = SHADOW_WIDTH.toFloat() / SHADOW_HEIGHT.toFloat()
+        val near = 1f
+        val far = 25f
+        ShadowProj = Matrix4f().perspective(Math.toRadians(90f), aspect, near, far)
+
+        shadowTransform.add(ShadowProj.mul(Matrix4f().lookAt(pointLight4.lightPos, pointLight4.lightPos.add(Vector3f(1f, 0f,0f)),
+                                                            Vector3f(0f, -1f, 0f))))
+        shadowTransform.add(ShadowProj.mul(Matrix4f().lookAt(pointLight4.lightPos, pointLight4.lightPos.add(Vector3f(-1f, 0f,0f)),
+            Vector3f(0f, -1f, 0f))))
+        shadowTransform.add(ShadowProj.mul(Matrix4f().lookAt(pointLight4.lightPos, pointLight4.lightPos.add(Vector3f(0f, 1f,0f)),
+            Vector3f(0f, 0f, 1f))))
+        shadowTransform.add(ShadowProj.mul(Matrix4f().lookAt(pointLight4.lightPos, pointLight4.lightPos.add(Vector3f(0f, -1f,0f)),
+            Vector3f(0f, 0f, -1f))))
+        shadowTransform.add(ShadowProj.mul(Matrix4f().lookAt(pointLight4.lightPos, pointLight4.lightPos.add(Vector3f(0f, 0f,1f)),
+            Vector3f(0f, -1f, 0f))))
+        shadowTransform.add(ShadowProj.mul(Matrix4f().lookAt(pointLight4.lightPos, pointLight4.lightPos.add(Vector3f(0f, 0f,-1f)),
+            Vector3f(0f, -1f, 0f))))
+
+
+        val Status = glCheckFramebufferStatus(GL_FRAMEBUFFER)
+
+        if (Status !== GL_FRAMEBUFFER_COMPLETE) {
+            println("FB error, status: 0x%x\n" + Status)
+
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     }
 
+
+
+    fun lerp(a: Float, b: Float, c: Float): Float{
+
+        return a + c * (b - a)
+    }
     fun loadCube(shaderProgram: ShaderProgram, faces: MutableList<String>, texUnit : Int){
 
         val cubeID = glGenTextures()
@@ -262,21 +411,16 @@ class Scene(private val window: GameWindow) {
             i++
         }
 
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)
 
         glActiveTexture(texUnit)
         shaderProgram.setUniformInt("sky", texUnit)
 
     }
-
-//    fun random() :Random{
-//
-//
-//    }
 
     fun hitboxCalc(renderable: Renderable?) : Boolean{
         objects.forEach {
@@ -397,28 +541,43 @@ class Scene(private val window: GameWindow) {
         }
     }
 
-
-
-
-
     fun render(dt: Float, t: Float) {
-        staticShader.use()
-        staticShader.setUniformVec3("colorground", Vector3f(0.01f, 1.0f, 0.01f))
+
+//        GL11.glViewport(0, 0 , SHADOW_WIDTH, SHADOW_HEIGHT)
+//        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, depthMapFBO)
+//        glClear(GL_DEPTH_BUFFER_BIT)
+//        shadowShader.use()
+//        pointLight4.bindList(shadowShader, cam.getCalculateViewMatrix(), 0)
+//        shadowShader.setUniformFloat("far_plane", 25f)
+//        for(i in 5 downTo  0) {
+//            shadowShader.setUniformMat("shadowMatrices[" + i + "]", shadowTransform[i], false)
+//        }
+//        ground.render(shadowShader)
+//        player?.render(shadowShader)
+//        enemys.forEach { it?.render(shadowShader) }
+//
+//        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+//        glViewport(0, 0, window.windowWidth, window.windowHeight)
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-        cam.bind(staticShader)
+        toonShader.use()
+        toonShader.setUniformFloat("far_plane", 25f)
+        GL13.glActiveTexture(11)
+        GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, depthCubeMap)
+
+        cam.bind(toonShader)
 
         var i = 0
-        spotLight.bind(staticShader, cam.getCalculateViewMatrix())
+        spotLight.bind(toonShader, cam.getCalculateViewMatrix())
         pointList.forEach{
             //it.bindList(staticShader, cam.getCalculateViewMatrix(), i)
-            it.bindList(staticShader, cam.getCalculateViewMatrix(), i)
+            it.bindList(toonShader, cam.getCalculateViewMatrix(), i)
             i++
         }
 
-        if(camState == 0) {cam.bind(staticShader)}
-        if(camState == 1) {cam1.bind(staticShader)}
-        if(camState == 2) {cam2.bind(staticShader)}
-        if(camState == 3) {cam3.bind(staticShader)}
+        if(camState == 0) {cam.bind(toonShader)}
+        if(camState == 1) {cam1.bind(toonShader)}
+        if(camState == 2) {cam2.bind(toonShader)}
+        if(camState == 3) {cam3.bind(toonShader)}
 
         if(firstTime == true){
 
@@ -436,19 +595,12 @@ class Scene(private val window: GameWindow) {
 
         }
 
-        enemys.forEach { it?.render(staticShader) }
+        enemys.forEach { it?.render(toonShader) }
 
+        player?.render(toonShader)
+        ground.render(toonShader)
 
-
-
-
-
-
-
-        player?.render(staticShader)
-        ground.render(staticShader)
-        sphere.render(staticShader)
-        bulletTest?.render(staticShader)
+        bulletTest?.render(toonShader)
 
         //Skybox render
         GL11.glDepthMask(false)
@@ -456,13 +608,12 @@ class Scene(private val window: GameWindow) {
         skyboxShader.use()
         skyboxShader.setUniformMat("view_sky", Matrix4f(Matrix3f(cam.getCalculateViewMatrix())), false)
         cam.bind(skyboxShader)
-        skybox.render(skyboxShader)
+        skyboy?.render(skyboxShader)
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0)
         glEnable(GL_CULL_FACE)
         glDepthMask(true)
 
     }
-
 
     fun update(dt: Float, t: Float) {
         if(invinFrame == true && invinFrameBuffer == true){
@@ -562,7 +713,6 @@ class Scene(private val window: GameWindow) {
 
 
             }
-
         }
 
         if(!window.getKeyState(GLFW.GLFW_KEY_SPACE)){
@@ -570,10 +720,6 @@ class Scene(private val window: GameWindow) {
                 bulletTest?.translate(Vector3f(0f, 0f, x * 0.002f))
                 x = 0
         }
-
-//        if(window.getKeyState(GLFW.GLFW_KEY_R)){
-//            bulletTest?.translate()
-//        }
 
         if(camState == 3){
             if (window.getKeyState(GLFW.GLFW_KEY_DOWN)){cam3.translate(Vector3f(0f, -dt * 20, 0f)) }
