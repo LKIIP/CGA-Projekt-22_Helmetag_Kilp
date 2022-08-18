@@ -7,15 +7,15 @@ Listen Sie hier alle Teammitglieder auf.
 - Pascal Helmetag
 
 # Featureliste
-- Welt und Models //TODO - Luca
-- Verschiedene Shader //TODO - Luca
-- Kollisionserkennung //TODO - Pascal
-- SSAO //TODO - Luca
-- 1rd Person View - In der "Kampfwelt", WASD Movement, LMB Shoot und RMB Zoom //TODO - Pascal
-- 3rd Person View - In der ""//TODO - Pascal
-- Freeroam View //TODO - Pascal
-- Kampfsystem //TODO - Luca & Pascal
-- Shadow Mapping //TODO - Luca
+- Welt und Models //WIP/DONE - Luca
+- Verschiedene Shader //WIP/DONE - Luca
+- Kollisionserkennung //DONE - Pascal
+- SSAO //ABORTED - Luca
+- 1rd Person View - In der "Kampfwelt", WASD Movement, LMB Shoot und RMB Zoom //DONE - Pascal
+- 3rd Person View - In der ""//DONE - Pascal
+- Freeroam View //DONE - Pascal
+- Kampfsystem //DONE - Luca & Pascal
+- Shadow Mapping //WIP - Luca
 
 # Quellenverzeichnis
 Listen Sie hier ALLE Quellen der genutzten Ressourcen auf.
