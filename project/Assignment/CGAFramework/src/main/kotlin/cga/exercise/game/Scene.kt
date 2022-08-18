@@ -8,6 +8,7 @@ import cga.exercise.components.geometry.VertexAttribute
 import cga.exercise.components.light.PointLight
 import cga.exercise.components.light.SpotLight
 import cga.exercise.components.shader.ShaderProgram
+import cga.exercise.components.texture.CubeMap
 //import cga.exercise.components.texture.Skybox
 import cga.exercise.components.texture.Texture2D
 import cga.framework.GLError
@@ -157,7 +158,6 @@ class Scene(private val window: GameWindow) {
 
         xPosition  = 0.0
         yPosition  = 0.0
-
 
 
 
@@ -335,7 +335,7 @@ class Scene(private val window: GameWindow) {
 
         lightSpaceMatrix = lightProjection.mul(lightView)
 
-         depthCubeMap = glGenTextures()
+        depthCubeMap = glGenTextures()
         GL11.glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap)
         for (i in 5 downTo 0){
             GL11.glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + 1, 0, GL_DEPTH_COMPONENT,
@@ -382,6 +382,7 @@ class Scene(private val window: GameWindow) {
             println("FB error, status: 0x%x\n" + Status)
 
         }
+        GL11.glBindTexture(GL_TEXTURE_CUBE_MAP, 0)
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     }
