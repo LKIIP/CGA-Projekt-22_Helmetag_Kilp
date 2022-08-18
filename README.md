@@ -8,6 +8,7 @@ Listen Sie hier alle Teammitglieder auf.
 
 # Featureliste
 - Welt und Models //WIP/DONE - Luca
+- Skybox //WIP
 - Verschiedene Shader //WIP/DONE - Luca
 - Kollisionserkennung //DONE - Pascal
 - SSAO //ABORTED - Luca
