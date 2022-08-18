@@ -8,42 +8,43 @@ import org.lwjgl.stb.STBImage
 import java.nio.ByteBuffer
 
 
-class CubeMap(imageData: ByteBuffer, width: Int, height: Int, genMipMaps: Boolean): ITexture{
+class CubeMap(texID: Int): ITexture{
     private var texID: Int = -1
         private set
 
     init {
-        try {
-            processTexture(imageData, width, height, genMipMaps)
-        } catch (ex: java.lang.Exception) {
-            ex.printStackTrace()
-        }
+
     }
     companion object {
         //create texture from file
         //don't support compressed textures for now
         //instead stick to pngs
-        operator fun invoke(path: String, genMipMaps: Boolean, i : Int) {
+        operator fun invoke(face: MutableList<String>, genMipMaps: Boolean): CubeMap {
+            val texID = GL11.glGenTextures()
+            GL11.glBindTexture(GL_TEXTURE_CUBE_MAP, texID)
             val x = BufferUtils.createIntBuffer(6)
             val y = BufferUtils.createIntBuffer(6)
             val readChannels = BufferUtils.createIntBuffer(6)
+            var imageData: ByteBuffer?
             var i = 0
             //flip y coordinate to make OpenGL happy
             STBImage.stbi_set_flip_vertically_on_load(false)
-            val imageData = STBImage.stbi_load(path, x, y, readChannels, 4)
-                ?: throw Exception("Image file \"" + path + "\" couldn't be read:\n" + STBImage.stbi_failure_reason())
-                return glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, x.get(), y.get(), 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData)
+            face.forEach{face ->
 
+                imageData = STBImage.stbi_load(face, x, y, readChannels, 4)
+                    ?: throw Exception("Image file \"" + face + "\" couldn't be read:\n" + STBImage.stbi_failure_reason())
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, x.get(), y.get(), 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData)
                 STBImage.stbi_image_free(imageData)
 
+            }
+
+            GL11.glBindTexture(GL_TEXTURE_CUBE_MAP, 0)
+            return CubeMap(texID)
         }
     }
 
     override fun processTexture(imageData: ByteBuffer, width: Int, height: Int, genMipMaps: Boolean) {
-
-        texID = GL11.glGenTextures()
-        GL11.glBindTexture(GL_TEXTURE_CUBE_MAP, texID)
-        GL11.glBindTexture(GL_TEXTURE_CUBE_MAP, 0)
+        TODO("Not yet implemented")
     }
 
     override fun setTexParams(wrapS: Int, wrapT: Int, minFilter: Int, magFilter: Int) {
@@ -62,7 +63,7 @@ class CubeMap(imageData: ByteBuffer, width: Int, height: Int, genMipMaps: Boolea
     }
 
     override fun bind(textureUnit: Int) {
-        GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureUnit)
+        GL13.glActiveTexture(GL_TEXTURE0 + textureUnit)
         GL11.glBindTexture(GL_TEXTURE_CUBE_MAP, texID)
     }
 

@@ -14,8 +14,8 @@ class Renderable(private var meshList: MutableList<Mesh>, private var materialLi
 
         }
         materialList.forEach{material ->
-            val emit :Texture2D = material.emit
-            val diff :Texture2D = material.diff
+            val emit :Texture2D = material.diff
+            val diff :Texture2D = material.emit
             val specular: Texture2D = material.specular
             shaderProgram.setUniformVec2("tcMultiplier", material.tcMultiplier)
             shaderProgram.setUniformFloat("shininess", material.shininess)
