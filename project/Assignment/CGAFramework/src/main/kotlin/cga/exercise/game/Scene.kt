@@ -249,17 +249,17 @@ class Scene(private val window: GameWindow) {
         cam3.rotate(Math.toRadians(270f), 0f, 0f)
         cam3.translate(Vector3f(0f, 0f, 20f))
 
-        pointLight = PointLight(Vector3f(-10f ,15f, -10f), Vector3f(0f, 0f, 0f))
-        pointLight1 = PointLight(Vector3f(10f ,15f, -10f), Vector3f(0f, 0f, 0f))
-        pointLight2 = PointLight(Vector3f(10f ,15f, 10f), Vector3f(0f, 0f, 0f))
-        pointLight3 = PointLight(Vector3f(-10f ,15f, 10f), Vector3f(0f, 0f, 0f))
-        pointLight4 = PointLight(Vector3f(0f ,5f, 0f), Vector3f(1f, 1f, 1f))
+        pointLight = PointLight(Vector3f(-10f ,15f, -10f), Vector3f(1f, 0f, 0f))
+        pointLight1 = PointLight(Vector3f(10f ,15f, -10f), Vector3f(0f, 1f, 0f))
+        pointLight2 = PointLight(Vector3f(10f ,15f, 10f), Vector3f(0f, 0f, 1f))
+        pointLight3 = PointLight(Vector3f(-10f ,15f, 10f), Vector3f(1f, 0f, 1f))
+        pointLight4 = PointLight(Vector3f(0f ,5f, 0f), Vector3f(0f, 0f, 0f))
         pointList.add(pointLight4)
         pointList.add(pointLight)
         pointList.add(pointLight1)
         pointList.add(pointLight2)
         pointList.add(pointLight3)
-        spotLight = SpotLight(Vector3f(0f, 1f, -0.5f), Vector3f(1f, 0f, 0f), 20f, 10f, _parent = player)
+        spotLight = SpotLight(Vector3f(0f, 1f, -0.5f), Vector3f(0.8f, 0.8f, 0.8f), 20f, 10f, _parent = player)
         spotLight.rotate(Math.toRadians(-20f), 0f, 0f)
 
         // SSAO G-Buffer zeug
@@ -549,25 +549,25 @@ class Scene(private val window: GameWindow) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glViewport(0, 0, window.windowWidth, window.windowHeight)
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-        toonShader.use()
-        toonShader.setUniformFloat("far_plane", 25f)
+        staticShader.use()
+        staticShader.setUniformFloat("far_plane", 25f)
 //        GL13.glActiveTexture(11)
 //        GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, depthCubeMap)
 
-        cam.bind(toonShader)
+        cam.bind(staticShader)
 
         var i = 0
-        spotLight.bind(toonShader, cam.getCalculateViewMatrix())
+        spotLight.bind(staticShader, cam.getCalculateViewMatrix())
         pointList.forEach{
             //it.bindList(staticShader, cam.getCalculateViewMatrix(), i)
-            it.bindList(toonShader, cam.getCalculateViewMatrix(), i)
+            it.bindList(staticShader, cam.getCalculateViewMatrix(), i)
             i++
         }
 
-        if(camState == 0) {cam.bind(toonShader)}
-        if(camState == 1) {cam1.bind(toonShader)}
-        if(camState == 2) {cam2.bind(toonShader)}
-        if(camState == 3) {cam3.bind(toonShader)}
+        if(camState == 0) {cam.bind(staticShader)}
+        if(camState == 1) {cam1.bind(staticShader)}
+        if(camState == 2) {cam2.bind(staticShader)}
+        if(camState == 3) {cam3.bind(staticShader)}
 
         if(firstTime == true){
 
@@ -585,11 +585,11 @@ class Scene(private val window: GameWindow) {
 
         }
 
-        enemys.forEach { it?.render(toonShader) }
+        enemys.forEach { it?.render(staticShader) }
 
-        ground?.render(toonShader)
-        player?.render(toonShader)
-        bulletTest?.render(toonShader)
+        ground?.render(staticShader)
+        player?.render(staticShader)
+        bulletTest?.render(staticShader)
 
         //Skybox render
         glDepthFunc(GL_LEQUAL)

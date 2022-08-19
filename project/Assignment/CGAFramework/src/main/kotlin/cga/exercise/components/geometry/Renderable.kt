@@ -10,25 +10,29 @@ class Renderable(private var meshList: MutableList<Mesh>, private var materialLi
     override fun render(shaderProgram: ShaderProgram) {
         var name : String = "model_matrix"
 
-        materialList.forEach{material ->
-            val emit :Texture2D = material.diff
-            emit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
-            emit.bind(0)
-            shaderProgram.setUniformInt("emit", 0)
 
-            val diff :Texture2D = material.emit
-            diff.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
-            diff.bind(1)
-            shaderProgram.setUniformInt("diff", 1)
+            materialList.forEach{material ->
+                val emit :Texture2D = material.emit
+                emit.bind(0)
+//               emit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
+                shaderProgram.setUniformInt("emit", 0)
 
-            val specular: Texture2D = material.specular
-            specular.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
-            specular.bind(2)
-            shaderProgram.setUniformInt("spec", 2)
-            shaderProgram.setUniformVec2("tcMultiplier", material.tcMultiplier)
-            shaderProgram.setUniformFloat("shininess", material.shininess)
 
-        }
+                val diff :Texture2D = material.diff
+                diff.bind(1)
+//                diff.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
+                shaderProgram.setUniformInt("diff", 1)
+
+
+                val specular: Texture2D = material.specular
+                specular.bind(2)
+//                specular.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
+                shaderProgram.setUniformInt("spec", 2)
+                shaderProgram.setUniformVec2("tcMultiplier", material.tcMultiplier)
+                shaderProgram.setUniformFloat("shininess", material.shininess)
+
+
+            }
         meshList.forEach {mesh ->
             shaderProgram.setUniformMat(name, getWorldModelMatrix(), false)
             mesh.render(shaderProgram)
