@@ -13,7 +13,7 @@ Listen Sie hier alle Teammitglieder auf.
 - Kollisionserkennung- Pascal
 - 1rd Person View , WASD Movement, Space Shoot//DONE - Pascal
 - 3rd Person View, Kamerawechsel mit Bild-Hoch und Bild-Runter - Pascal
-- Top-Down - Pascal
+- Top-Down, bewegbar mit Pfeiltasten - Pascal
 - Kampfsystem Pascal
 - Shadow Mapping //Bugged - Luca
 
