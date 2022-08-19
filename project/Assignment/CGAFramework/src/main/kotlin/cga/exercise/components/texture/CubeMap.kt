@@ -34,6 +34,8 @@ class CubeMap(texID: Int): ITexture{
                 imageData = STBImage.stbi_load(face, x, y, readChannels, 4)
                     ?: throw Exception("Image file \"" + face + "\" couldn't be read:\n" + STBImage.stbi_failure_reason())
                 glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, x.get(), y.get(), 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData)
+                if(genMipMaps)
+                    glGenerateMipmap(GL11.GL_TEXTURE_2D)
                 STBImage.stbi_image_free(imageData)
 
             }

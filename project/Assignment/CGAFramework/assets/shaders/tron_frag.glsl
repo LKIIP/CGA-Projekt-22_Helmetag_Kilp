@@ -56,7 +56,7 @@ struct PointLight{
     vec4 lp;
 };
 
-#define NR_POINT_LIGHTS 1
+#define NR_POINT_LIGHTS 5
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 out vec4 color;
@@ -162,7 +162,7 @@ void main(){
     vec3 difftex = linear(difftexSRGB, gamma);
 
     //Ambient
-    vec3 ambient = calcAmbient(difftex, pointLights[0].lightCol*0.01);
+    vec3 ambient = calcAmbient(difftex, pointLights[0].lightCol);
 
     vec3 res = vec3(0, 0 , 0);
 

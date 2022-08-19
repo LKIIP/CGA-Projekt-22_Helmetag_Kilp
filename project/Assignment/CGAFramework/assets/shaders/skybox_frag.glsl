@@ -4,8 +4,15 @@ out vec4 FragColor;
 in vec3 texCoords;
 
 uniform samplerCube sky;
+uniform sampler2D emit;
+uniform sampler2D diff;
+uniform sampler2D spec;
+
+
 
 void main()
 {
-    FragColor = vec4(vec3(0.13, 0.13, 0.13), 1);
+
+
+    FragColor = texture(sky, texCoords);
 }

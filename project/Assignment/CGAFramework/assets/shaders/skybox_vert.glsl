@@ -10,6 +10,7 @@ uniform mat4 projection_matrix;
 
 void main()
 {
-    texCoords = vec3(64.0, 64.0, 64.0) *  aPos;
-    gl_Position = projection_matrix * view_sky * model_matrix * vec4(aPos, 1.0);
+    texCoords =  aPos;
+    vec4 pos= projection_matrix * view_sky * model_matrix * vec4(aPos, 1.0);
+    gl_Position = pos.xyzz;
 }

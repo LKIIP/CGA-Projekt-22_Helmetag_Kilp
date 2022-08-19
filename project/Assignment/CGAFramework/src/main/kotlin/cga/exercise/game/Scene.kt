@@ -59,15 +59,6 @@ class Scene(private val window: GameWindow) {
     private val lightView : Matrix4f
     private val lightSpaceMatrix : Matrix4f
     private val ShadowProj: Matrix4f
-//    private val meshG: Mesh
-//    private val meshE : Mesh
-//    private val meshSkybox: Mesh
-//    private val meshS : Mesh
-    private val meshListS : MutableList<Mesh> = arrayListOf()
-    private val meshListTree : MutableList<Mesh> = arrayListOf()
-    private val meshListG : MutableList<Mesh> = arrayListOf()
-    private val meshListE : MutableList<Mesh> = arrayListOf()
-    private val meshListSkybox : MutableList<Mesh> = arrayListOf()
 
     private val MeshListLevel  : MutableList<Mesh> = arrayListOf()
     private val cam : TronCamera
@@ -89,13 +80,6 @@ class Scene(private val window: GameWindow) {
         "assets/textures/skybox/back.png",
         "assets/textures/skybox/front.png")
 
-//    val groundRes : OBJLoader.OBJResult = OBJLoader.loadOBJ("assets/level/level.obj")
-//    val groundMeshList : MutableList<OBJLoader.OBJMesh> = groundRes.objects[0].meshes
-//    val enemyRes : OBJLoader.OBJResult = OBJLoader.loadOBJ("assets/Among Us/among us.obj")
-//    val enemyMeshList : MutableList<OBJLoader.OBJMesh> = enemyRes.objects[0].meshes
-//    val skyboxRes : OBJLoader.OBJResult = OBJLoader.loadOBJ("assets/models/skybox.obj")
-//    val skyboxMeshList : MutableList<OBJLoader.OBJMesh> = skyboxRes.objects[0].meshes
-
     private val objects : MutableList<Renderable?> = ArrayList()
     private val enemys : MutableList<Renderable?> = ArrayList()
     private var enemyStatsHp: Int = 0
@@ -113,7 +97,6 @@ class Scene(private val window: GameWindow) {
 
     private var rotationState : Int = 0
 
-
     private var player: Renderable? = ModelLoader.loadModel("assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj", 0f, 0f, 0f)
     private var enemy00: Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var enemy01: Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
@@ -127,6 +110,7 @@ class Scene(private val window: GameWindow) {
     private var enemy09: Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var enemy10: Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var enemy11: Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+
 
     private var skyboy: Renderable? = ModelLoader.loadModel("assets/models/skybox.obj", 0f, 0f, 0f)
 
@@ -142,14 +126,11 @@ class Scene(private val window: GameWindow) {
     private var enemyMaterial = Material(enemyDiff, enemyEmit, enemySpec, 240f, Vector2f(64f, 64f))
 
 
-    private var skyboxtex :CubeMap = CubeMap.invoke(skyboxList, false)
+    private var skyboxtex :CubeMap = CubeMap.invoke(skyboxList, true)
 
 
 
-    private var ground : Renderable = ModelLoader.loadModel("assets/level/level.obj", 0f, 0f, 0f)!!
-//    private var skybox : Renderable
-//    private var sphere: Renderable
-    //private var sphere : Renderable
+    private var ground : Renderable? = ModelLoader.loadModel("assets/models/level_update.obj", 0f, 0f, 0f)!!
 
     private var xPosition : Double
     private var yPosition : Double
@@ -161,6 +142,7 @@ class Scene(private val window: GameWindow) {
         yPosition  = 0.0
 
 
+        enemy00?.scale(Vector3f(0.02f))
 
         staticShader = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl", "assets/shaders/geometry.glsl")
         skyboxShader = ShaderProgram("assets/shaders/skybox_vert.glsl", "assets/shaders/skybox_frag.glsl", null)
@@ -198,15 +180,15 @@ class Scene(private val window: GameWindow) {
 
 
         //Cubemap-Test // TexUnit Skyboxes ab 10
-        skyboxtex.setTexParamsCube( GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR)
+       skyboxtex.setTexParamsCube( GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR)
 
-        groundEmit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
-        groundDiff.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
-        groundSpec.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
+//        groundEmit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
+//        groundDiff.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
+//        groundSpec.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
 
-        enemyEmit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
-        enemyDiff.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
-        enemySpec.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
+//        enemyEmit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
+//        enemyDiff.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
+//        enemySpec.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
 //        meshG = Mesh(groundMeshList[0].vertexData, groundMeshList[0].indexData, vertexAttributesG, groundMaterial)
 //        meshE = Mesh(enemyMeshList[0].vertexData, enemyMeshList[0].indexData, vertexAttributesG, enemyMaterial)
 //        meshListE.add(meshE)
@@ -225,6 +207,10 @@ class Scene(private val window: GameWindow) {
 //        skybox.scale(Vector3f(30f))
         skyboy?.scale(Vector3f(30f))
 
+//        loadCube(skyboxShader, skyboxList, 10)
+
+
+
         player?.scale((Vector3f(0.8f)))
         player?.hp = 10
         player?.hitbox = 1f
@@ -235,7 +221,7 @@ class Scene(private val window: GameWindow) {
         bulletTest?.hitbox
         objects.add(player)
         objects.add(bulletTest)
-        enemys.add(enemy00)
+        //enemys.add(enemy00)
         enemys.add(enemy01)
         enemys.add(enemy02)
         enemys.add(enemy03)
@@ -262,16 +248,16 @@ class Scene(private val window: GameWindow) {
         cam3.rotate(Math.toRadians(270f), 0f, 0f)
         cam3.translate(Vector3f(0f, 0f, 20f))
 
-        pointLight = PointLight(Vector3f(-50f ,0f, -50f), Vector3f(0f, 0f, 0f))
-        pointLight1 = PointLight(Vector3f(50f ,0f, -50f), Vector3f(0f, 0f, 0f))
-        pointLight2 = PointLight(Vector3f(50f ,0f, 50f), Vector3f(0f, 0f, 0f))
-        pointLight3 = PointLight(Vector3f(-50f ,0f, 50f), Vector3f(0f, 0f, 0f))
-        pointLight4 = PointLight(Vector3f(0f ,20f, 0f), Vector3f(0.5f, 0.33f, 0.25f))
+        pointLight = PointLight(Vector3f(-10f ,15f, -10f), Vector3f(0f, 0f, 0f))
+        pointLight1 = PointLight(Vector3f(10f ,15f, -10f), Vector3f(0f, 0f, 0f))
+        pointLight2 = PointLight(Vector3f(10f ,15f, 10f), Vector3f(0f, 0f, 0f))
+        pointLight3 = PointLight(Vector3f(-10f ,15f, 10f), Vector3f(0f, 0f, 0f))
+        pointLight4 = PointLight(Vector3f(0f ,5f, 0f), Vector3f(1f, 1f, 1f))
         pointList.add(pointLight4)
-//        pointList.add(pointLight)
-//        pointList.add(pointLight1)
-//        pointList.add(pointLight2)
-//        pointList.add(pointLight3)
+        pointList.add(pointLight)
+        pointList.add(pointLight1)
+        pointList.add(pointLight2)
+        pointList.add(pointLight3)
         spotLight = SpotLight(Vector3f(0f, 1f, -0.5f), Vector3f(1f, 0f, 0f), 20f, 10f, _parent = player)
         spotLight.rotate(Math.toRadians(-20f), 0f, 0f)
 
@@ -326,7 +312,7 @@ class Scene(private val window: GameWindow) {
 //
 //        glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
-        // Shadows
+//         Shadows
 
         depthMapFBO = glGenFramebuffers() ;  SHADOW_WIDTH = 1024;  SHADOW_HEIGHT = 1024
         lightProjection = Matrix4f().ortho(-10f, 10f, -10f, 10f, 1f, 7.5f)
@@ -394,7 +380,35 @@ class Scene(private val window: GameWindow) {
 
         return a + c * (b - a)
     }
+    fun loadCube(shaderProgram: ShaderProgram, faces: MutableList<String>, texUnit : Int){
 
+        val cubeID = glGenTextures()
+        GL11.glBindTexture(GL_TEXTURE_CUBE_MAP, cubeID)
+
+        val a = BufferUtils.createIntBuffer(6)
+        val b = BufferUtils.createIntBuffer(6)
+        val channels = BufferUtils.createIntBuffer(6)
+        var data: ByteBuffer?
+        var i = 0
+        STBImage.stbi_set_flip_vertically_on_load(false)
+
+        faces.forEach{
+            data = STBImage.stbi_load(it, a, b, channels, 4)
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, a.get(), b.get(), 0, GL_RGB, GL_UNSIGNED_BYTE, data)
+            STBImage.stbi_image_free(data)
+            i++
+        }
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)
+
+        glActiveTexture(texUnit)
+        shaderProgram.setUniformInt("sky", texUnit)
+
+    }
 
     fun hitboxCalc(renderable: Renderable?) : Boolean{
         objects.forEach {
@@ -517,26 +531,26 @@ class Scene(private val window: GameWindow) {
 
     fun render(dt: Float, t: Float) {
 
-//        GL11.glViewport(0, 0 , SHADOW_WIDTH, SHADOW_HEIGHT)
-//        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, depthMapFBO)
-//        glClear(GL_DEPTH_BUFFER_BIT)
-//        shadowShader.use()
-//        pointLight4.bindList(shadowShader, cam.getCalculateViewMatrix(), 0)
-//        shadowShader.setUniformFloat("far_plane", 25f)
-//        for(i in 5 downTo  0) {
-//            shadowShader.setUniformMat("shadowMatrices[" + i + "]", shadowTransform[i], false)
-//        }
-//        ground.render(shadowShader)
-//        player?.render(shadowShader)
-//        enemys.forEach { it?.render(shadowShader) }
-//
-//        glBindFramebuffer(GL_FRAMEBUFFER, 0)
-//        glViewport(0, 0, window.windowWidth, window.windowHeight)
+        GL11.glViewport(0, 0 , SHADOW_WIDTH, SHADOW_HEIGHT)
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, depthMapFBO)
+        glClear(GL_DEPTH_BUFFER_BIT)
+        shadowShader.use()
+        pointLight4.bindList(shadowShader, cam.getCalculateViewMatrix(), 0)
+        shadowShader.setUniformFloat("far_plane", 25f)
+        for(i in 5 downTo  0) {
+            shadowShader.setUniformMat("shadowMatrices[" + i + "]", shadowTransform[i], false)
+        }
+        ground?.render(shadowShader)
+        player?.render(shadowShader)
+        enemys.forEach { it?.render(shadowShader) }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        glViewport(0, 0, window.windowWidth, window.windowHeight)
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
         toonShader.use()
         toonShader.setUniformFloat("far_plane", 25f)
-        GL13.glActiveTexture(11)
-        GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, depthCubeMap)
+//        GL13.glActiveTexture(11)
+//        GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, depthCubeMap)
 
         cam.bind(toonShader)
 
@@ -557,7 +571,7 @@ class Scene(private val window: GameWindow) {
 
             enemys.forEach {
                 it?.scale(Vector3f(0.01f))
-                it?.hitbox = 1f
+                it?.hitbox = 0.5f
                 spawnRandom(it)
                 objects.add(it)
                 it?.hp = 3 + enemyStatsHp
@@ -571,23 +585,22 @@ class Scene(private val window: GameWindow) {
 
         enemys.forEach { it?.render(toonShader) }
 
+        ground?.render(toonShader)
         player?.render(toonShader)
-        ground.render(toonShader)
-
         bulletTest?.render(toonShader)
 
         //Skybox render
-        GL11.glDepthMask(false)
+        glDepthFunc(GL_LEQUAL)
         glDisable(GL_CULL_FACE)
         skyboxShader.use()
+        cam.bind(skyboxShader)
+        skyboxShader.setUniformMat("view_sky", Matrix4f(Matrix3f(cam.getCalculateViewMatrix())), false)
         skyboxtex.bind(10)
         skyboxShader.setUniformInt("sky", 10)
-        skyboxShader.setUniformMat("view_sky", Matrix4f(Matrix3f(cam.getCalculateViewMatrix())), false)
-        cam.bind(skyboxShader)
         skyboy?.render(skyboxShader)
         skyboxtex.unbind()
         glEnable(GL_CULL_FACE)
-        glDepthMask(true)
+        GL11.glDepthFunc(GL_LESS)
 
     }
 
