@@ -129,6 +129,11 @@ class Scene(private val window: GameWindow) {
     private var groundMaterial = Material(groundDiff, groundEmit, groundSpec, 240f, Vector2f(64f, 64f))
     private var enemyMaterial = Material(enemyDiff, enemyEmit, enemySpec, 240f, Vector2f(64f, 64f))
 
+    private var wall0 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var wall1 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var wall2 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var wall3 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+
 
     private var skyboxtex :CubeMap = CubeMap.invoke(skyboxList, true)
 
@@ -264,6 +269,20 @@ class Scene(private val window: GameWindow) {
         pointList.add(pointLight3)
         spotLight = SpotLight(Vector3f(0f, 1f, -0.5f), Vector3f(0.8f, 0.8f, 0.8f), 20f, 10f, _parent = player)
         spotLight.rotate(Math.toRadians(-20f), 0f, 0f)
+
+        wall0?.translate(Vector3f(40f, 0f, 0f))
+        wall1?.translate(Vector3f(-40f, 0f, 0f))
+        wall2?.translate(Vector3f(0f, 0f, 40f))
+        wall3?.translate(Vector3f(0f, 0f, -40f))
+        wall0?.hitbox = 20f
+        wall1?.hitbox = 20f
+        wall2?.hitbox = 20f
+        wall3?.hitbox = 20f
+
+        objects.add(wall0)
+        objects.add(wall1)
+        objects.add(wall2)
+        objects.add(wall3)
 
         // SSAO G-Buffer zeug
 
@@ -423,7 +442,6 @@ class Scene(private val window: GameWindow) {
                             if (renderable.getWorldPosition().x + renderable.hitbox <= it.getWorldPosition().x + it.hitbox && renderable.getWorldPosition().x + renderable.hitbox >= it.getWorldPosition().x - it.hitbox || renderable.getWorldPosition().x - renderable.hitbox <= it.getWorldPosition().x + it.hitbox && renderable.getWorldPosition().x - renderable.hitbox >= it.getWorldPosition().x - it.hitbox) {
                                 if (renderable.getWorldPosition().y + renderable.hitbox <= it.getWorldPosition().y + it.hitbox && renderable.getWorldPosition().y + renderable.hitbox >= it.getWorldPosition().y - it.hitbox || renderable.getWorldPosition().y - renderable.hitbox <= it.getWorldPosition().y + it.hitbox && renderable.getWorldPosition().y - renderable.hitbox >= it.getWorldPosition().y - it.hitbox) {
                                     if (renderable.getWorldPosition().z + renderable.hitbox <= it.getWorldPosition().z + it.hitbox && renderable.getWorldPosition().z + renderable.hitbox >= it.getWorldPosition().z - it.hitbox || renderable.getWorldPosition().z - renderable.hitbox <= it.getWorldPosition().z + it.hitbox && renderable.getWorldPosition().z - renderable.hitbox >= it.getWorldPosition().z - it.hitbox) {
-                                        println("Kollision")
                                         if (renderable == bulletTest) {
                                             it.hp--
                                             println(it.hp)
@@ -431,7 +449,7 @@ class Scene(private val window: GameWindow) {
                                                 deleteEnemy(it)
                                             }
                                         }
-                                        if(renderable != player){
+                                        if(renderable != player && renderable.isEnemy){
                                             if(it == player){
                                                 if(invinFrame == false){
                                                     player?.hp = player?.hp?.minus(1)!!
@@ -453,8 +471,33 @@ class Scene(private val window: GameWindow) {
         return true
     }
 
+    fun hitboxCalcPlayer(renderable: Renderable?) : Boolean{
+        objects.forEach {
+            if (renderable != null) {
+                if (it != null) {
+                    if(renderable != it){
+                        if(!(renderable == bulletTest && it == player)||(renderable == player && it == bulletTest) ) {
+                            if (renderable.getWorldPosition().x + renderable.hitbox <= it.getWorldPosition().x + it.hitbox && renderable.getWorldPosition().x + renderable.hitbox >= it.getWorldPosition().x - it.hitbox || renderable.getWorldPosition().x - renderable.hitbox <= it.getWorldPosition().x + it.hitbox && renderable.getWorldPosition().x - renderable.hitbox >= it.getWorldPosition().x - it.hitbox) {
+                                if (renderable.getWorldPosition().y + renderable.hitbox <= it.getWorldPosition().y + it.hitbox && renderable.getWorldPosition().y + renderable.hitbox >= it.getWorldPosition().y - it.hitbox || renderable.getWorldPosition().y - renderable.hitbox <= it.getWorldPosition().y + it.hitbox && renderable.getWorldPosition().y - renderable.hitbox >= it.getWorldPosition().y - it.hitbox) {
+                                    if (renderable.getWorldPosition().z + renderable.hitbox <= it.getWorldPosition().z + it.hitbox && renderable.getWorldPosition().z + renderable.hitbox >= it.getWorldPosition().z - it.hitbox || renderable.getWorldPosition().z - renderable.hitbox <= it.getWorldPosition().z + it.hitbox && renderable.getWorldPosition().z - renderable.hitbox >= it.getWorldPosition().z - it.hitbox) {
+                                        if(renderable == player && it.isEnemy == true){
+                                            return false
+                                        }
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return true
+    }
+
     fun deleteEnemy(renderable: Renderable?){
         objects.remove(renderable)
+        renderable?.setWorldPosition(Vector3f(0f,0f,0f))
         renderable?.scale(Vector3f(0.00001f))
         enemyCount = enemyCount - 1
         if(enemyCount < 1){
@@ -482,7 +525,7 @@ class Scene(private val window: GameWindow) {
     }
 
     fun spawnRandom(renderable: Renderable?){
-        renderable?.translate(Vector3f((-1500..1500).random().toFloat(), 0f,(-1500..1500).random().toFloat() ))
+        renderable?.translate(Vector3f((-1000..1000).random().toFloat(), 0f,(-1000..1000).random().toFloat() ))
         if(hitboxCalc(renderable) == false){
             spawnRandom(renderable)
         }
@@ -562,22 +605,9 @@ class Scene(private val window: GameWindow) {
           glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
           standardShader!!.use()
           standardShader!!.setUniformFloat("far_plane", 25f)
-          GL13.glActiveTexture(11)
-          GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, depthCubeMap)
-        GL11.glViewport(0, 0 , SHADOW_WIDTH, SHADOW_HEIGHT)
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, depthMapFBO)
-        glClear(GL_DEPTH_BUFFER_BIT)
-        shadowShader.use()
-        pointLight4.bindList(shadowShader, cam.getCalculateViewMatrix(), 0)
-        shadowShader.setUniformFloat("far_plane", 25f)
-        for(i in 5 downTo  0) {
-            shadowShader.setUniformMat("shadowMatrices[" + i + "]", shadowTransform[i], false)
-        }
-        ground?.render(shadowShader)
-        player?.render(shadowShader)
-        enemys.forEach { it?.render(shadowShader) }
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+
         glViewport(0, 0, window.windowWidth, window.windowHeight)
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
@@ -607,6 +637,7 @@ class Scene(private val window: GameWindow) {
           if(firstTime == true){
 
               enemys.forEach {
+                  it?.isEnemy = true
                   it?.scale(Vector3f(0.01f))
                   it?.hitbox = 1f
                   spawnRandom(it)
@@ -670,26 +701,11 @@ class Scene(private val window: GameWindow) {
             enemys.forEach { enemyWalk(it) }
         }
 
-        enemys.forEach {
-            var xxx : Vector3f = (player?.getWorldPosition()!!.min(it?.getWorldPosition()) )
-            xxx.normalize()
-            var yyy : Vector3f = Vector3f(0f,0f,1f).cross(xxx)
-            yyy.normalize()
-            var zzz : Vector3f = xxx.cross(yyy)
 
-            var chasermat : Matrix4f = Matrix4f()
-            chasermat.setRow(0,Vector4f(0f, xxx.x, xxx.y, xxx.z))
-            chasermat.setRow(1,Vector4f(1f, yyy.x, yyy.y, yyy.z))
-            chasermat.setRow(2,Vector4f(2f, zzz.x, zzz.y, zzz.z))
-            chasermat.setRow(3 ,Vector4f(3f, player?.getWorldPosition()!!.x, player?.getWorldPosition()!!.y, player?.getWorldPosition()!!.z))
-
-
-
-        }
 
         if (window.getKeyState(GLFW.GLFW_KEY_W)){player?.translate(Vector3f(0f, 0f, - 0.1f))
 
-            if(hitboxCalc(player) == false){
+            if(hitboxCalcPlayer(player) == false){
                 player?.translate(Vector3f(0f, 0f,  0.1f))
 
                 if(invinFrame == false){
@@ -701,11 +717,15 @@ class Scene(private val window: GameWindow) {
                 println(t)
                 println(tempT)
 
-            }}
+            }
+            if(hitboxCalc(player) == false){
+                player?.translate(Vector3f(0f, 0f,  0.1f))
+            }
+        }
 
         if (window.getKeyState(GLFW.GLFW_KEY_S)){player?.translate(Vector3f(0f, 0f,  0.05f))
 
-            if(hitboxCalc(player) == false){
+            if(hitboxCalcPlayer(player) == false){
                 player?.translate(Vector3f(0f, 0f,  -0.05f))
                 if(invinFrame == false){
                     player?.hp = player?.hp?.minus(1)!!
@@ -713,11 +733,15 @@ class Scene(private val window: GameWindow) {
                     invinFrameBuffer = true
                 }
 
-            }}
+            }
+            if(hitboxCalc(player) == false){
+                player?.translate(Vector3f(0f, 0f,  -0.05f))
+            }
+        }
 
         if (window.getKeyState(GLFW.GLFW_KEY_D)){player?.translate(Vector3f(0.05f, 0f,  0f))
 
-            if(hitboxCalc(player) == false){
+            if(hitboxCalcPlayer(player) == false){
                 player?.translate(Vector3f(-0.05f, 0f,  0f))
                 if(invinFrame == false){
                     player?.hp = player?.hp?.minus(1)!!
@@ -725,18 +749,28 @@ class Scene(private val window: GameWindow) {
                     invinFrameBuffer = true
                 }
 
-            }}
+            }
+            if(hitboxCalc(player) == false){
+                player?.translate(Vector3f(-0.05f, 0f,  0f))
+            }
+        }
 
         if (window.getKeyState(GLFW.GLFW_KEY_A)){player?.translate(Vector3f(-0.05f, 0f,  0f))
 
-            if(hitboxCalc(player) == false){
+            if(hitboxCalcPlayer(player) == false){
                 player?.translate(Vector3f(0.05f, 0f,  0f))
                 if(invinFrame == false){
                     player?.hp = player?.hp?.minus(1)!!
                     invinFrame = true
                     invinFrameBuffer = true
                 }
-            }}
+            }
+        if(hitboxCalc(player) == false){
+            player?.translate(Vector3f(0.05f, 0f,  0f))
+        }
+
+        }
+
 
         if(window.getKeyState(GLFW.GLFW_KEY_SPACE) && pressSpace == true){
             pressSpace = false

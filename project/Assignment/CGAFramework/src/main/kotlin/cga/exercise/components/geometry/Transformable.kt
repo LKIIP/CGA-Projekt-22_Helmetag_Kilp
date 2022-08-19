@@ -108,6 +108,11 @@ open class Transformable(private var modelMatrix: Matrix4f = Matrix4f(), var par
 
     }
 
+    fun setWorldPosition(newPos : Vector3f){
+        var temp : Vector4fc = Vector4f(newPos.x, newPos.y, newPos.z, getWorldModelMatrix().getRowColumn(3,3))
+        getWorldModelMatrix().setColumn(3,temp )
+    }
+
     /**
      * Returns x-axis of object coordinate system
      * Hint: first normalized column of model matrix

@@ -6,7 +6,7 @@ import org.joml.Matrix4f
 import org.lwjgl.opengl.GL11.*
 
 class Renderable(private var meshList: MutableList<Mesh>, private var materialList: MutableList<Material>, private var textureList: MutableList<Texture2D>,
-                 _parent : Transformable? = null, var hp : Int, var hitbox: Float = 0f) : Transformable(parent = _parent), IRenderable {
+                 _parent : Transformable? = null, var hp : Int, var hitbox: Float = 0f, var isEnemy : Boolean = false) : Transformable(parent = _parent), IRenderable {
     override fun render(shaderProgram: ShaderProgram) {
         var name : String = "model_matrix"
 
