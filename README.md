@@ -11,7 +11,7 @@ Listen Sie hier alle Teammitglieder auf.
 - Skybox - Luca
 - Verschiedene Shader - Luca
 - Kollisionserkennung- Pascal
-- 1rd Person View , WASD Movement, LMB Shoot und RMB Zoom //DONE - Pascal
+- 1rd Person View , WASD Movement, LMB Shoot//DONE - Pascal
 - 3rd Person View - Pascal
 - Top-Down - Pascal
 - Kampfsystem Pascal
