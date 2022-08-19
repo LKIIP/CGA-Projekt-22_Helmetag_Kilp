@@ -37,7 +37,6 @@ class Scene(private val window: GameWindow) {
     private val staticShader: ShaderProgram
     private val skyboxShader: ShaderProgram
     private val toonShader: ShaderProgram
-    private val ssaoGeoShader: ShaderProgram
     private val shadowShader: ShaderProgram
     private val shaderList: MutableList<ShaderProgram> = arrayListOf()
     private val shadowTransform : MutableList<Matrix4f> = arrayListOf()
@@ -52,7 +51,6 @@ class Scene(private val window: GameWindow) {
     private val lightSpaceMatrix : Matrix4f
     private val ShadowProj: Matrix4f
 
-    private val MeshListLevel  : MutableList<Mesh> = arrayListOf()
     private val cam : TronCamera
     private val cam1 : TronCamera
     private val cam2 : TronCamera
@@ -143,7 +141,6 @@ class Scene(private val window: GameWindow) {
         staticShader = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl", "assets/shaders/geometry.glsl")
         skyboxShader = ShaderProgram("assets/shaders/skybox_vert.glsl", "assets/shaders/skybox_frag.glsl", null)
         toonShader = ShaderProgram("assets/shaders/toon_vert.glsl", "assets/shaders/toon_frag.glsl", "assets/shaders/geometry.glsl")
-        ssaoGeoShader = ShaderProgram("assets/shaders/ssao_geovert.glsl", "assets/shaders/ssao_geofrag.glsl", "assets/shaders/geometry.glsl")
         shadowShader = ShaderProgram("assets/shaders/shadow_vert.glsl", "assets/shaders/shadow_frag.glsl", "assets/shaders/shadow_geometry.glsl")
 
         shaderList.add(staticShader)
