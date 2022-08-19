@@ -14,27 +14,18 @@ import cga.exercise.components.texture.Texture2D
 import cga.framework.GLError
 import cga.framework.GameWindow
 import cga.framework.ModelLoader
-import cga.framework.OBJLoader
 import org.joml.Matrix4f
 import org.joml.Vector3f
-import org.lwjgl.opengl.GL11.*
 import org.joml.*
-import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.ARBFramebufferObject.*
 import org.lwjgl.opengl.ARBInternalformatQuery2.GL_TEXTURE_CUBE_MAP
 import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL12.*
 import org.lwjgl.opengl.GL13
 import org.lwjgl.opengl.GL13.*
 import org.lwjgl.opengl.GL32.glFramebufferTexture
-import org.lwjgl.stb.STBImage
-import org.lwjgl.stb.STBImage.stbi_image_free
-import org.lwjgl.stb.STBImage.stbi_load
 import org.lwjgl.system.MemoryUtil.NULL
-import java.nio.ByteBuffer
 import java.util.*
-import kotlin.math.atan2
 
 
 /**
@@ -73,18 +64,18 @@ class Scene(private val window: GameWindow) {
     private val pointLight4 : PointLight
     private val spotLight : SpotLight
     private val pointList: MutableList<PointLight> = arrayListOf()
-    private val skyboxList: MutableList<String> = arrayListOf("assets/textures/skybox/left.jpg",
-        "assets/textures/skybox/right.jpg",
-        "assets/textures/skybox/top.jpg",
-        "assets/textures/skybox/bottom.jpg",
-        "assets/textures/skybox/back.jpg",
-        "assets/textures/skybox/front.jpg")
+    private val skyboxList: MutableList<String> = arrayListOf("assets/textures/skybox/left.png",
+        "assets/textures/skybox/right.png",
+        "assets/textures/skybox/top.png",
+        "assets/textures/skybox/bottom.png",
+        "assets/textures/skybox/back.png",
+        "assets/textures/skybox/front.png")
 
     private val objects : MutableList<Renderable?> = ArrayList()
     private val enemys : MutableList<Renderable?> = ArrayList()
     private var enemyStatsHp: Int = 0
     private var enemyStatsSpeed: Float = 0f
-    private var enemyCount: Int = 11
+    private var enemyCount: Int = 12
     private var camState = 0;
     private var pressOk : Boolean = true;
     private var pressSpace : Boolean = true;
@@ -118,7 +109,7 @@ class Scene(private val window: GameWindow) {
 
     private var skyboy: Renderable? = ModelLoader.loadModel("assets/models/skybox.obj", 0f, 0f, 0f)
 
-    private var bulletTest: Renderable? = ModelLoader.loadModel("assets/Boxing Glove/bxglvsp(right).obj",0f,0f,0f)
+    private var boxingGlove: Renderable? = ModelLoader.loadModel("assets/Boxing Glove/bxglvsp(right).obj",0f,0f,0f)
     private var groundDiff : Texture2D = Texture2D.invoke("assets/textures/ground_diff.png", true)
     private var groundEmit :Texture2D = Texture2D.invoke("assets/textures/ground_emit.png", true)
     private var groundSpec :Texture2D = Texture2D.invoke("assets/textures/ground_spec.png", true)
@@ -133,6 +124,20 @@ class Scene(private val window: GameWindow) {
     private var wall1 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var wall2 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var wall3 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+
+    private var stone : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+
+    private var tree00 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var tree01 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var tree02 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var tree03 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var tree04 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var tree05 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var tree06 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var tree07 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var tree08 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var tree09 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+
 
 
    private var skyboxtex :CubeMap = CubeMap.invoke(skyboxList, true)
@@ -149,9 +154,6 @@ class Scene(private val window: GameWindow) {
 
         xPosition  = 0.0
         yPosition  = 0.0
-
-
-        enemy00?.scale(Vector3f(0.02f))
 
         staticShader = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl", "assets/shaders/geometry.glsl")
         skyboxShader = ShaderProgram("assets/shaders/skybox_vert.glsl", "assets/shaders/skybox_frag.glsl", null)
@@ -192,13 +194,14 @@ class Scene(private val window: GameWindow) {
         player?.hp = 10
         player?.hitbox = 1f
 
-        bulletTest?.scale(Vector3f(0.2f))
-        bulletTest?.parent = player
-        bulletTest?.translate(Vector3f(0f,1f,-9f))
-        bulletTest?.hitbox
+        boxingGlove?.scale(Vector3f(0.2f))
+        boxingGlove?.parent = player
+        boxingGlove?.translate(Vector3f(0f,1f,-9f))
+        boxingGlove?.hitbox
+
         objects.add(player)
-        objects.add(bulletTest)
-        //enemys.add(enemy00)
+        objects.add(boxingGlove)
+        enemys.add(enemy00)
         enemys.add(enemy01)
         enemys.add(enemy02)
         enemys.add(enemy03)
@@ -251,6 +254,63 @@ class Scene(private val window: GameWindow) {
         objects.add(wall1)
         objects.add(wall2)
         objects.add(wall3)
+
+//        stone?.translate(Vector3f(-2.5f, 0f, 10f))
+//        stone?.scale(Vector3f(0f))
+//        stone?.hitbox = 3f
+//
+//        objects.add(stone)
+
+//        tree00?.translate(Vector3f(-1f,0f,-1.7f))
+//        tree00?.scale(Vector3f(0f))
+//        tree00?.hitbox = 1f
+//
+//        tree01?.translate(Vector3f(-6f,0f,-8f))
+//        tree01?.scale(Vector3f(0f))
+//        tree01?.hitbox = 1f
+//
+//        tree02?.translate(Vector3f(3.3f,0f,-9f))
+//        tree02?.scale(Vector3f(0f))
+//        tree02?.hitbox = 1f
+//
+//        tree03?.translate(Vector3f(7f,0f,-1.3f))
+//        tree03?.scale(Vector3f(0f))
+//        tree03?.hitbox = 1f
+//
+//        tree04?.translate(Vector3f(9f,0f,-8.5f))
+//        tree04?.scale(Vector3f(0f))
+//        tree04?.hitbox = 1f
+//
+//        tree05?.translate(Vector3f(1f,0f,1f))
+//        tree05?.scale(Vector3f(0f))
+//        tree05?.hitbox = 1f
+//
+//        tree06?.translate(Vector3f(-1f,0f,1.5f))
+//        tree06?.scale(Vector3f(0f))
+//        tree06?.hitbox = 1f
+//
+//        tree07?.translate(Vector3f(-9.7f,0f,1.3f))
+//        tree07?.scale(Vector3f(0f))
+//        tree07?.hitbox = 1f
+//
+//        tree08?.translate(Vector3f(-1f,0f,-3.5f))
+//        tree08?.scale(Vector3f(0f))
+//        tree08?.hitbox = 1f
+//
+//        tree09?.translate(Vector3f(-6.5f,0f,-7.5f))
+//        tree09?.scale(Vector3f(0f))
+//        tree09?.hitbox = 1f
+//
+//        objects.add(tree00)
+//        objects.add(tree01)
+//        objects.add(tree02)
+//        objects.add(tree03)
+//        objects.add(tree04)
+//        objects.add(tree05)
+//        objects.add(tree06)
+//        objects.add(tree07)
+//        objects.add(tree08)
+//        objects.add(tree09)
 
         // SSAO G-Buffer zeug
 
@@ -377,11 +437,11 @@ class Scene(private val window: GameWindow) {
             if (renderable != null) {
                 if (it != null) {
                     if(renderable != it){
-                        if(!(renderable == bulletTest && it == player)||(renderable == player && it == bulletTest) ) {
+                        if(!(renderable == boxingGlove && it == player)||(renderable == player && it == boxingGlove) ) {
                             if (renderable.getWorldPosition().x + renderable.hitbox <= it.getWorldPosition().x + it.hitbox && renderable.getWorldPosition().x + renderable.hitbox >= it.getWorldPosition().x - it.hitbox || renderable.getWorldPosition().x - renderable.hitbox <= it.getWorldPosition().x + it.hitbox && renderable.getWorldPosition().x - renderable.hitbox >= it.getWorldPosition().x - it.hitbox) {
                                 if (renderable.getWorldPosition().y + renderable.hitbox <= it.getWorldPosition().y + it.hitbox && renderable.getWorldPosition().y + renderable.hitbox >= it.getWorldPosition().y - it.hitbox || renderable.getWorldPosition().y - renderable.hitbox <= it.getWorldPosition().y + it.hitbox && renderable.getWorldPosition().y - renderable.hitbox >= it.getWorldPosition().y - it.hitbox) {
                                     if (renderable.getWorldPosition().z + renderable.hitbox <= it.getWorldPosition().z + it.hitbox && renderable.getWorldPosition().z + renderable.hitbox >= it.getWorldPosition().z - it.hitbox || renderable.getWorldPosition().z - renderable.hitbox <= it.getWorldPosition().z + it.hitbox && renderable.getWorldPosition().z - renderable.hitbox >= it.getWorldPosition().z - it.hitbox) {
-                                        if (renderable == bulletTest) {
+                                        if (renderable == boxingGlove) {
                                             it.hp--
                                             println(it.hp)
                                             if(it.hp < 1){
@@ -415,7 +475,7 @@ class Scene(private val window: GameWindow) {
             if (renderable != null) {
                 if (it != null) {
                     if(renderable != it){
-                        if(!(renderable == bulletTest && it == player)||(renderable == player && it == bulletTest) ) {
+                        if(!(renderable == boxingGlove && it == player)||(renderable == player && it == boxingGlove) ) {
                             if (renderable.getWorldPosition().x + renderable.hitbox <= it.getWorldPosition().x + it.hitbox && renderable.getWorldPosition().x + renderable.hitbox >= it.getWorldPosition().x - it.hitbox || renderable.getWorldPosition().x - renderable.hitbox <= it.getWorldPosition().x + it.hitbox && renderable.getWorldPosition().x - renderable.hitbox >= it.getWorldPosition().x - it.hitbox) {
                                 if (renderable.getWorldPosition().y + renderable.hitbox <= it.getWorldPosition().y + it.hitbox && renderable.getWorldPosition().y + renderable.hitbox >= it.getWorldPosition().y - it.hitbox || renderable.getWorldPosition().y - renderable.hitbox <= it.getWorldPosition().y + it.hitbox && renderable.getWorldPosition().y - renderable.hitbox >= it.getWorldPosition().y - it.hitbox) {
                                     if (renderable.getWorldPosition().z + renderable.hitbox <= it.getWorldPosition().z + it.hitbox && renderable.getWorldPosition().z + renderable.hitbox >= it.getWorldPosition().z - it.hitbox || renderable.getWorldPosition().z - renderable.hitbox <= it.getWorldPosition().z + it.hitbox && renderable.getWorldPosition().z - renderable.hitbox >= it.getWorldPosition().z - it.hitbox) {
@@ -459,7 +519,7 @@ class Scene(private val window: GameWindow) {
             it?.hp = 3 + enemyStatsHp
 
         }
-        enemyCount = 11
+        enemyCount = 12
 
     }
 
@@ -586,7 +646,7 @@ class Scene(private val window: GameWindow) {
           player?.render(standardShader!!)
           ground!!.render(standardShader!!)
 
-          bulletTest?.render(standardShader!!)
+          boxingGlove?.render(standardShader!!)
 
         //Skybox render
         glDepthFunc(GL_LEQUAL)
@@ -695,9 +755,10 @@ class Scene(private val window: GameWindow) {
             pressSpace = false
 
 
+
             while (x < 25000) {
-                bulletTest?.translate(Vector3f(0f, 0f, - 0.002f))
-                if(hitboxCalc(bulletTest) == false){
+                boxingGlove?.translate(Vector3f(0f, 0f, - 0.002f))
+                if(hitboxCalc(boxingGlove) == false){
                     return
                 }
                 x++
@@ -709,7 +770,9 @@ class Scene(private val window: GameWindow) {
 
         if(!window.getKeyState(GLFW.GLFW_KEY_SPACE)){
             pressSpace = true
-                bulletTest?.translate(Vector3f(0f, 0f, x * 0.002f))
+
+
+                boxingGlove?.translate(Vector3f(0f, 0f, x * 0.002f))
                 x = 0
         }
 
@@ -744,6 +807,9 @@ class Scene(private val window: GameWindow) {
         if(window.getKeyState(GLFW.GLFW_KEY_P)){
             doNothing = true
         }
+
+
+
 
     }
 
