@@ -84,7 +84,7 @@ class Scene(private val window: GameWindow) {
     private val enemys : MutableList<Renderable?> = ArrayList()
     private var enemyStatsHp: Int = 0
     private var enemyStatsSpeed: Float = 0f
-    private var enemyCount: Int = 12
+    private var enemyCount: Int = 11
     private var camState = 0;
     private var pressOk : Boolean = true;
     private var pressSpace : Boolean = true;
@@ -94,9 +94,12 @@ class Scene(private val window: GameWindow) {
     private var tempT : Float = 0f;
     private var x : Int = 0
 
+    private var shaderChange : Boolean = true
+
     private var firstTime : Boolean = true
 
-    private var rotationState : Int = 0
+    private var standardShader : ShaderProgram? = null
+
 
     private var player: Renderable? = ModelLoader.loadModel("assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj", 0f, 0f, 0f)
     private var enemy00: Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
@@ -457,6 +460,7 @@ class Scene(private val window: GameWindow) {
         if(enemyCount < 1){
             enemyStatsHp = enemyStatsHp + 1
             enemyStatsSpeed = enemyStatsSpeed + 0.01f
+            shaderChange = !shaderChange
             spawnEnemys()
         }
     }
@@ -473,7 +477,7 @@ class Scene(private val window: GameWindow) {
             it?.hp = 3 + enemyStatsHp
 
         }
-        enemyCount = 12
+        enemyCount = 11
 
     }
 
@@ -533,6 +537,33 @@ class Scene(private val window: GameWindow) {
 
     fun render(dt: Float, t: Float) {
 
+        if(shaderChange){
+            standardShader = toonShader
+        }else{
+            standardShader = staticShader
+        }
+
+//        GL11.glViewport(0, 0 , SHADOW_WIDTH, SHADOW_HEIGHT)
+//        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, depthMapFBO)
+//        glClear(GL_DEPTH_BUFFER_BIT)
+//        shadowShader.use()
+//        pointLight4.bindList(shadowShader, cam.getCalculateViewMatrix(), 0)
+//        shadowShader.setUniformFloat("far_plane", 25f)
+//        for(i in 5 downTo  0) {
+//            shadowShader.setUniformMat("shadowMatrices[" + i + "]", shadowTransform[i], false)
+//        }
+//        ground.render(shadowShader)
+//        player?.render(shadowShader)
+//        enemys.forEach { it?.render(shadowShader) }
+//
+//        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+//        glViewport(0, 0, window.windowWidth, window.windowHeight)
+
+          glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+          standardShader!!.use()
+          standardShader!!.setUniformFloat("far_plane", 25f)
+          GL13.glActiveTexture(11)
+          GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, depthCubeMap)
         GL11.glViewport(0, 0 , SHADOW_WIDTH, SHADOW_HEIGHT)
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, depthMapFBO)
         glClear(GL_DEPTH_BUFFER_BIT)
@@ -549,47 +580,62 @@ class Scene(private val window: GameWindow) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glViewport(0, 0, window.windowWidth, window.windowHeight)
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-        staticShader.use()
-        staticShader.setUniformFloat("far_plane", 25f)
+
 //        GL13.glActiveTexture(11)
 //        GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, depthCubeMap)
 
-        cam.bind(staticShader)
+          cam.bind(standardShader!!)
 
-        var i = 0
-        spotLight.bind(staticShader, cam.getCalculateViewMatrix())
-        pointList.forEach{
-            //it.bindList(staticShader, cam.getCalculateViewMatrix(), i)
-            it.bindList(staticShader, cam.getCalculateViewMatrix(), i)
-            i++
+          var i = 0
+          spotLight.bind(standardShader!!, cam.getCalculateViewMatrix())
+          pointList.forEach{
+              //it.bindList(staticShader, cam.getCalculateViewMatrix(), i)
+              it.bindList(standardShader!!, cam.getCalculateViewMatrix(), i)
+              i++
+          }
+
+
+
+          if(camState == 0) {cam.bind(standardShader!!)}
+          if(camState == 1) {cam1.bind(standardShader!!)}
+          if(camState == 2) {cam2.bind(standardShader!!)}
+          if(camState == 3) {cam3.bind(standardShader!!)}
+
+
+
+
+          if(firstTime == true){
+
+              enemys.forEach {
+                  it?.scale(Vector3f(0.01f))
+                  it?.hitbox = 1f
+                  spawnRandom(it)
+                  objects.add(it)
+                  it?.hp = 3 + enemyStatsHp
+              }
+
+              firstTime = false
+
+
+
         }
 
-        if(camState == 0) {cam.bind(staticShader)}
-        if(camState == 1) {cam1.bind(staticShader)}
-        if(camState == 2) {cam2.bind(staticShader)}
-        if(camState == 3) {cam3.bind(staticShader)}
 
-        if(firstTime == true){
-
-            enemys.forEach {
-                it?.scale(Vector3f(0.01f))
-                it?.hitbox = 0.5f
-                spawnRandom(it)
-                objects.add(it)
-                it?.hp = 3 + enemyStatsHp
-            }
-
-            firstTime = false
+          enemys.forEach { it?.render(standardShader!!) }
+          player?.render(standardShader!!)
+          ground!!.render(standardShader!!)
 
 
 
-        }
+          bulletTest?.render(standardShader!!)
 
-        enemys.forEach { it?.render(staticShader) }
 
-        ground?.render(staticShader)
-        player?.render(staticShader)
-        bulletTest?.render(staticShader)
+
+
+
+
+
+
 
         //Skybox render
         glDepthFunc(GL_LEQUAL)
