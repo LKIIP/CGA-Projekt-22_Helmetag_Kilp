@@ -41,6 +41,7 @@ class Scene(private val window: GameWindow) {
     private val shadowShader: ShaderProgram
     private val shaderList: MutableList<ShaderProgram> = arrayListOf()
     private val shadowTransform : MutableList<Matrix4f> = arrayListOf()
+    private val levelList: MutableList<Renderable?> = arrayListOf()
 
     private var depthMap : Int =-1
     private var depthMapFBO : Int = -1
@@ -92,7 +93,7 @@ class Scene(private val window: GameWindow) {
     private var standardShader : ShaderProgram? = null
 
 
-    private var player: Renderable? = ModelLoader.loadModel("assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj", 0f, 0f, 0f)
+    private var player: Renderable? = ModelLoader.loadModel("assets/Among Us/player.obj", 0f, 0f, 0f)
     private var enemy00: Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var enemy01: Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var enemy02: Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
@@ -107,44 +108,28 @@ class Scene(private val window: GameWindow) {
     private var enemy11: Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
 
 
-    private var skyboy: Renderable? = ModelLoader.loadModel("assets/models/skybox.obj", 0f, 0f, 0f)
 
     private var boxingGlove: Renderable? = ModelLoader.loadModel("assets/Boxing Glove/bxglvsp(right).obj",0f,0f,0f)
-    private var groundDiff : Texture2D = Texture2D.invoke("assets/textures/ground_diff.png", true)
-    private var groundEmit :Texture2D = Texture2D.invoke("assets/textures/ground_emit.png", true)
-    private var groundSpec :Texture2D = Texture2D.invoke("assets/textures/ground_spec.png", true)
 
-    private var enemyDiff: Texture2D = Texture2D.invoke("assets/Among Us/Plastic_4K_Diffuse.jpg", true)
-    private var enemyEmit :Texture2D = Texture2D.invoke("assets/Among Us/Plastic_4K_Normal.jpg", true)
-    private var enemySpec :Texture2D = Texture2D.invoke("assets/Among Us/Plastic_4K_Reflect.jpg", true)
-    private var groundMaterial = Material(groundDiff, groundEmit, groundSpec, 240f, Vector2f(64f, 64f))
-    private var enemyMaterial = Material(enemyDiff, enemyEmit, enemySpec, 240f, Vector2f(64f, 64f))
 
     private var wall0 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var wall1 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var wall2 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var wall3 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var stone : Renderable? = ModelLoader.loadModel("assets/models/Level/boulder.obj", 0f, 0f, 0f)
+    private var tree00 : Renderable? = ModelLoader.loadModel("assets/models/Level/tree_raute1.obj", 0f, 0f, 0f)
+    private var tree01 : Renderable? = ModelLoader.loadModel("assets/models/Level/tree_raute2.obj", 0f, 0f, 0f)
+    private var tree02 : Renderable? = ModelLoader.loadModel("assets/models/Level/tree_round1.obj", 0f, 0f, 0f)
+    private var tree03 : Renderable? = ModelLoader.loadModel("assets/models/Level/tree_round2.obj", 0f, 0f, 0f)
+    private var tree04 : Renderable? = ModelLoader.loadModel("assets/models/Level/tree_square1.obj", 0f, 0f, 0f)
+    private var tree05 : Renderable? = ModelLoader.loadModel("assets/models/Level/tree_square2.obj", 0f, 0f, 0f)
+    private var tree06 : Renderable? = ModelLoader.loadModel("assets/models/Level/tree_square3.obj", 0f, 0f, 0f)
+    private var tree07 : Renderable? = ModelLoader.loadModel("assets/models/Level/tree_square4.obj", 0f, 0f, 0f)
+    private var fence: Renderable? = ModelLoader.loadModel("assets/models/Level/fences.obj", 0f, 0f, 0f)
+    private var ground : Renderable? = ModelLoader.loadModel("assets/models/Level/ground.obj", 0f, 0f, 0f)!!
 
-    private var stone : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
-
-    private var tree00 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
-    private var tree01 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
-    private var tree02 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
-    private var tree03 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
-    private var tree04 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
-    private var tree05 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
-    private var tree06 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
-    private var tree07 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
-    private var tree08 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
-    private var tree09 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
-
-
-
-   private var skyboxtex :CubeMap = CubeMap.invoke(skyboxList, true)
-
-
-
-    private var ground : Renderable? = ModelLoader.loadModel("assets/models/level_update.obj", 0f, 0f, 0f)!!
+    private var skyboy: Renderable? = ModelLoader.loadModel("assets/models/skybox.obj", 0f, 0f, 0f)
+    private var skyboxtex :CubeMap = CubeMap.invoke(skyboxList, true)
 
     private var xPosition : Double
     private var yPosition : Double
@@ -189,8 +174,7 @@ class Scene(private val window: GameWindow) {
 
         skyboy?.scale(Vector3f(30f))
 
-
-        player?.scale((Vector3f(0.8f)))
+        player?.translate(Vector3f(5f, 0f, 5f))
         player?.hp = 10
         player?.hitbox = 1f
 
@@ -214,6 +198,8 @@ class Scene(private val window: GameWindow) {
         enemys.add(enemy10)
         enemys.add(enemy11)
 
+
+
         cam = TronCamera( _parent = player)
         cam1 = TronCamera( _parent = player)
         cam2 = TronCamera( _parent = player)
@@ -228,11 +214,11 @@ class Scene(private val window: GameWindow) {
         cam3.rotate(Math.toRadians(270f), 0f, 0f)
         cam3.translate(Vector3f(0f, 0f, 20f))
 
-        pointLight = PointLight(Vector3f(-10f ,15f, -10f), Vector3f(1f, 0f, 0f))
-        pointLight1 = PointLight(Vector3f(10f ,15f, -10f), Vector3f(0f, 1f, 0f))
-        pointLight2 = PointLight(Vector3f(10f ,15f, 10f), Vector3f(0f, 0f, 1f))
-        pointLight3 = PointLight(Vector3f(-10f ,15f, 10f), Vector3f(1f, 0f, 1f))
-        pointLight4 = PointLight(Vector3f(0f ,5f, 0f), Vector3f(0f, 0f, 0f))
+        pointLight = PointLight(Vector3f(-10f ,2f, -10f), Vector3f(1f, 0f, 0f))
+        pointLight1 = PointLight(Vector3f(10f ,2f, -10f), Vector3f(0f, 1f, 0f))
+        pointLight2 = PointLight(Vector3f(10f ,2f, 10f), Vector3f(0f, 0f, 1f))
+        pointLight3 = PointLight(Vector3f(-10f ,2f, 10f), Vector3f(1f, 0f, 1f))
+        pointLight4 = PointLight(Vector3f(0f ,10f, 0f), Vector3f(1f, 1f, 1f))
         pointList.add(pointLight4)
         pointList.add(pointLight)
         pointList.add(pointLight1)
@@ -255,115 +241,63 @@ class Scene(private val window: GameWindow) {
         objects.add(wall2)
         objects.add(wall3)
 
-//        stone?.translate(Vector3f(-2.5f, 0f, 10f))
-//        stone?.scale(Vector3f(0f))
-//        stone?.hitbox = 3f
-//
-//        objects.add(stone)
 
-//        tree00?.translate(Vector3f(-1f,0f,-1.7f))
-//        tree00?.scale(Vector3f(0f))
-//        tree00?.hitbox = 1f
-//
-//        tree01?.translate(Vector3f(-6f,0f,-8f))
-//        tree01?.scale(Vector3f(0f))
-//        tree01?.hitbox = 1f
-//
-//        tree02?.translate(Vector3f(3.3f,0f,-9f))
-//        tree02?.scale(Vector3f(0f))
-//        tree02?.hitbox = 1f
-//
-//        tree03?.translate(Vector3f(7f,0f,-1.3f))
-//        tree03?.scale(Vector3f(0f))
-//        tree03?.hitbox = 1f
-//
-//        tree04?.translate(Vector3f(9f,0f,-8.5f))
-//        tree04?.scale(Vector3f(0f))
-//        tree04?.hitbox = 1f
-//
-//        tree05?.translate(Vector3f(1f,0f,1f))
-//        tree05?.scale(Vector3f(0f))
-//        tree05?.hitbox = 1f
-//
-//        tree06?.translate(Vector3f(-1f,0f,1.5f))
-//        tree06?.scale(Vector3f(0f))
-//        tree06?.hitbox = 1f
-//
-//        tree07?.translate(Vector3f(-9.7f,0f,1.3f))
-//        tree07?.scale(Vector3f(0f))
-//        tree07?.hitbox = 1f
-//
-//        tree08?.translate(Vector3f(-1f,0f,-3.5f))
-//        tree08?.scale(Vector3f(0f))
-//        tree08?.hitbox = 1f
-//
-//        tree09?.translate(Vector3f(-6.5f,0f,-7.5f))
-//        tree09?.scale(Vector3f(0f))
-//        tree09?.hitbox = 1f
-//
-//        objects.add(tree00)
-//        objects.add(tree01)
-//        objects.add(tree02)
-//        objects.add(tree03)
-//        objects.add(tree04)
-//        objects.add(tree05)
-//        objects.add(tree06)
-//        objects.add(tree07)
-//        objects.add(tree08)
-//        objects.add(tree09)
 
-        // SSAO G-Buffer zeug
+        stone?.translate(Vector3f(-2.5f, 0f, 10f))
+        stone?.hitbox = 2f
 
-//        for (i in 64 downTo  0){
-//
-//            var sample  = Vector3f(Random.nextFloat() * 2.0f - 1.0f, Random.nextFloat() * 2.0f - 1.0f, Random.nextFloat())
-//            sample = sample.normalize()
-//            sample = sample.mul(Random.nextFloat())
-//            var scale : Float = i.toFloat() / 64f
-//            scale = lerp(0.1f, 1.0f, scale * scale)
-//            sample = sample.mul(scale)
-//            ssaoGeoShader.setUniformVec3("samples[" + i + "]", sample)
-//        }
-//
-//        var ssaoNoise : MutableList<Vector3f> = arrayListOf()
-//        ssaoNoise.add(Vector3f(0f))
-//        ssaoNoise.add(Vector3f(0f))
-//        for ( i in 16 downTo 0){
-//                    ssaoNoise.add(Vector3f(Random.nextFloat() * 2 - 1, Random.nextFloat() * 2 - 1, 0f))
-//            }
-//
-//        var noiseTexture = glGenTextures()
-//        GL11.glBindTexture(GL_TEXTURE_2D, noiseTexture)
-//        GL11.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 4, 4, 0, GL_RGB, GL_FLOAT, ssaoVec)
-//
-//        val gBuffer = glGenFramebuffers()
-//        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer)
-//
-//        val gPosition = glGenTextures()
-//        glBindTexture(GL_TEXTURE_2D, gPosition);
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, window.framebufferWidth, window.framebufferHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//
-//        val gNormal = glGenTextures()
-//        glBindTexture(GL_TEXTURE_2D, gNormal);
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, window.framebufferWidth, window.framebufferHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
-//
-//        val gAlbedoSpec  = glGenTextures()
-//        glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window.framebufferWidth, window.framebufferHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
-//
-//        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        objects.add(stone)
 
-//         Shadows
+        tree00?.translate(Vector3f(-10f,0f,-5f))
+        tree00?.hitbox = 1f
+
+        tree01?.translate(Vector3f(-6f,0f,-8f))
+        tree01?.hitbox = 1f
+
+        tree02?.translate(Vector3f(3.3f,0f,-9f))
+        tree02?.hitbox = 1f
+
+        tree03?.translate(Vector3f(7f,0f,-1.3f))
+        tree03?.hitbox = 1f
+
+        tree04?.translate(Vector3f(9f,0f,-8.5f))
+        tree04?.hitbox = 1f
+
+        tree05?.translate(Vector3f(12f,0f,12f))
+        tree05?.hitbox = 1f
+
+        tree06?.translate(Vector3f(-8f,0f,6f))
+        tree06?.hitbox = 1f
+
+        tree07?.translate(Vector3f(-9.7f,0f,1.3f))
+        tree07?.hitbox = 1f
+
+
+        objects.add(tree00)
+        objects.add(tree01)
+        objects.add(tree02)
+        objects.add(tree03)
+        objects.add(tree04)
+        objects.add(tree05)
+        objects.add(tree06)
+        objects.add(tree07)
+
+
+        levelList.add(tree00)
+        levelList.add(tree01)
+        levelList.add(tree02)
+        levelList.add(tree03)
+        levelList.add(tree04)
+        levelList.add(tree05)
+        levelList.add(tree06)
+        levelList.add(tree07)
+        levelList.add(fence)
+        levelList.add(stone)
+        levelList.add(ground)
+
+
+
+//      Shadows
 
         depthMapFBO = glGenFramebuffers() ;  SHADOW_WIDTH = 1024;  SHADOW_HEIGHT = 1024
         lightProjection = Matrix4f().ortho(-10f, 10f, -10f, 10f, 1f, 7.5f)
@@ -590,9 +524,6 @@ class Scene(private val window: GameWindow) {
         for(i in 5 downTo  0) {
             shadowShader.setUniformMat("shadowMatrices[" + i + "]", shadowTransform[i], false)
         }
-        ground?.render(shadowShader)
-        player?.render(shadowShader)
-        enemys.forEach { it?.render(shadowShader) }
         GL13.glActiveTexture(11)
         GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, depthCubeMap)
 
@@ -642,11 +573,16 @@ class Scene(private val window: GameWindow) {
 
         }
 
-          enemys.forEach { it?.render(standardShader!!) }
-          player?.render(standardShader!!)
-          ground!!.render(standardShader!!)
+        enemys.forEach { it?.render(standardShader!!) }
+        levelList.forEach { it?.render(standardShader!!) }
+        player?.render(standardShader!!)
 
-          boxingGlove?.render(standardShader!!)
+        boxingGlove?.render(standardShader!!)
+
+
+
+
+
 
         //Skybox render
         glDepthFunc(GL_LEQUAL)

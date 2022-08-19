@@ -64,14 +64,12 @@ out vec4 color;
 
 vec3 calculatePointLight(int i) {
 
-    //geometric data
     vec3 fragmentLight = normalize(pointLights[i].lp - fragmentData.p).xyz;
     vec3 emit = texture(diff, fragmentData.textureCoord).rgb;
 
-    // get lighting level
     float level = max(0.0, dot(fragmentData.normal, fragmentLight));
     level = floor(level * 4) / 4;
-    vec3 result = (pointLights[i].lightCol * vec3(0.6, 0.4, 0.8) * level);
+    vec3 result = (pointLights[i].lightCol * emit * level);
 
     return result;
 
@@ -108,7 +106,7 @@ vec3 calcAmbient(vec3 difftex , vec3 colorAmbient){
 void main() {
 
     //ambient
-    vec3 ambient = calcAmbient(vec3(0.6, 0.4, 0.8), pointLights[0]. lightCol * 0.1);
+    vec3 ambient = calcAmbient(texture(diff, fragmentData.textureCoord).rgb, pointLights[0]. lightCol * 0.1);
 
     vec3 temp = 0.2 * pointLights[0].lightCol;
 
