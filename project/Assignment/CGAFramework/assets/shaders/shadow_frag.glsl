@@ -3,6 +3,7 @@
 in vec4 FragPos;
 
 uniform float far_plane;
+uniform samplerCube depthMap;
 
 struct PointLight{
     vec3 lightPos;

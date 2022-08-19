@@ -14,19 +14,16 @@ class Renderable(private var meshList: MutableList<Mesh>, private var materialLi
             materialList.forEach{material ->
                 val emit :Texture2D = material.emit
                 emit.bind(0)
-//               emit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
                 shaderProgram.setUniformInt("emit", 0)
 
 
                 val diff :Texture2D = material.diff
                 diff.bind(1)
-//                diff.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
                 shaderProgram.setUniformInt("diff", 1)
 
 
                 val specular: Texture2D = material.specular
                 specular.bind(2)
-//                specular.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
                 shaderProgram.setUniformInt("spec", 2)
                 shaderProgram.setUniformVec2("tcMultiplier", material.tcMultiplier)
                 shaderProgram.setUniformFloat("shininess", material.shininess)

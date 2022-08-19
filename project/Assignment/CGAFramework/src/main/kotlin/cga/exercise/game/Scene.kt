@@ -135,7 +135,7 @@ class Scene(private val window: GameWindow) {
     private var wall3 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
 
 
-    private var skyboxtex :CubeMap = CubeMap.invoke(skyboxList, true)
+   private var skyboxtex :CubeMap = CubeMap.invoke(skyboxList, true)
 
 
 
@@ -181,43 +181,11 @@ class Scene(private val window: GameWindow) {
         val attrNormG = VertexAttribute(3, GL_FLOAT, strideG, 20) //normalval
         val vertexAttributesG = arrayOf<VertexAttribute>(attrPosG, attrTCG, attrNormG)
 
-        val strideE = 8 * 4
-        val attrPosE =  VertexAttribute(3, GL_FLOAT, strideG, 0) //position
-        val attrTCE = VertexAttribute(3, GL_FLOAT, strideG, 12) //textureCoordinate
-        val attrNormE = VertexAttribute(3, GL_FLOAT, strideG, 24) //normalval
-        val vertexAttributesE = arrayOf<VertexAttribute>(attrPosE, attrTCE, attrNormE)
-
 
         //Cubemap-Test // TexUnit Skyboxes ab 10
        skyboxtex.setTexParamsCube( GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR)
 
-//        groundEmit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
-//        groundDiff.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
-//        groundSpec.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
-
-//        enemyEmit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST)
-//        enemyDiff.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
-//        enemySpec.setTexParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST)
-//        meshG = Mesh(groundMeshList[0].vertexData, groundMeshList[0].indexData, vertexAttributesG, groundMaterial)
-//        meshE = Mesh(enemyMeshList[0].vertexData, enemyMeshList[0].indexData, vertexAttributesG, enemyMaterial)
-//        meshListE.add(meshE)
-//        meshListG.add(meshG)
-//        ground  = Renderable(meshListG, hp = 30000000)
-//        enemy00 = Renderable(meshListE, hp = 0)
-
-//        meshSkybox = Mesh(skyboxMeshList[0].vertexData, skyboxMeshList[0].indexData, vertexAttributesG)
-//        meshListSkybox.add(meshSkybox)
-//
-//        meshS = Mesh(sphereMeshList[0].vertexData, sphereMeshList[0].indexData, vertexAttributesG)
-//        meshListS.add(meshS)
-
-
-//        skybox = Renderable(meshListSkybox, null, 30000)
-//        skybox.scale(Vector3f(30f))
         skyboy?.scale(Vector3f(30f))
-
-//        loadCube(skyboxShader, skyboxList, 10)
-
 
 
         player?.scale((Vector3f(0.8f)))
@@ -403,35 +371,6 @@ class Scene(private val window: GameWindow) {
 
         return a + c * (b - a)
     }
-    fun loadCube(shaderProgram: ShaderProgram, faces: MutableList<String>, texUnit : Int){
-
-        val cubeID = glGenTextures()
-        GL11.glBindTexture(GL_TEXTURE_CUBE_MAP, cubeID)
-
-        val a = BufferUtils.createIntBuffer(6)
-        val b = BufferUtils.createIntBuffer(6)
-        val channels = BufferUtils.createIntBuffer(6)
-        var data: ByteBuffer?
-        var i = 0
-        STBImage.stbi_set_flip_vertically_on_load(false)
-
-        faces.forEach{
-            data = STBImage.stbi_load(it, a, b, channels, 4)
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, a.get(), b.get(), 0, GL_RGB, GL_UNSIGNED_BYTE, data)
-            STBImage.stbi_image_free(data)
-            i++
-        }
-
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)
-
-        glActiveTexture(texUnit)
-        shaderProgram.setUniformInt("sky", texUnit)
-
-    }
 
     fun hitboxCalc(renderable: Renderable?) : Boolean{
         objects.forEach {
@@ -580,40 +519,39 @@ class Scene(private val window: GameWindow) {
 
     fun render(dt: Float, t: Float) {
 
+       // Shadow RenderPass
+
+        GL11.glViewport(0, 0 , SHADOW_WIDTH, SHADOW_HEIGHT)
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, depthMapFBO)
+        glClear(GL_DEPTH_BUFFER_BIT)
+        shadowShader.use()
+        pointLight4.bindList(shadowShader, cam.getCalculateViewMatrix(), 0)
+        shadowShader.setUniformFloat("far_plane", 25f)
+        for(i in 5 downTo  0) {
+            shadowShader.setUniformMat("shadowMatrices[" + i + "]", shadowTransform[i], false)
+        }
+        ground?.render(shadowShader)
+        player?.render(shadowShader)
+        enemys.forEach { it?.render(shadowShader) }
+        GL13.glActiveTexture(11)
+        GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, depthCubeMap)
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+
+        // Normal Renderpass
+
+        glViewport(0, 0, window.windowWidth, window.windowHeight)
         if(shaderChange){
             standardShader = toonShader
         }else{
             standardShader = staticShader
         }
 
-//        GL11.glViewport(0, 0 , SHADOW_WIDTH, SHADOW_HEIGHT)
-//        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, depthMapFBO)
-//        glClear(GL_DEPTH_BUFFER_BIT)
-//        shadowShader.use()
-//        pointLight4.bindList(shadowShader, cam.getCalculateViewMatrix(), 0)
-//        shadowShader.setUniformFloat("far_plane", 25f)
-//        for(i in 5 downTo  0) {
-//            shadowShader.setUniformMat("shadowMatrices[" + i + "]", shadowTransform[i], false)
-//        }
-//        ground.render(shadowShader)
-//        player?.render(shadowShader)
-//        enemys.forEach { it?.render(shadowShader) }
-//
-//        glBindFramebuffer(GL_FRAMEBUFFER, 0)
-//        glViewport(0, 0, window.windowWidth, window.windowHeight)
-
-          glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-          standardShader!!.use()
-          standardShader!!.setUniformFloat("far_plane", 25f)
-
-
-
         glViewport(0, 0, window.windowWidth, window.windowHeight)
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-
-//        GL13.glActiveTexture(11)
-//        GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, depthCubeMap)
-
+        standardShader!!.use()
+        standardShader!!.setUniformFloat("far_plane", 25f)
           cam.bind(standardShader!!)
 
           var i = 0
@@ -624,15 +562,10 @@ class Scene(private val window: GameWindow) {
               i++
           }
 
-
-
           if(camState == 0) {cam.bind(standardShader!!)}
           if(camState == 1) {cam1.bind(standardShader!!)}
           if(camState == 2) {cam2.bind(standardShader!!)}
           if(camState == 3) {cam3.bind(standardShader!!)}
-
-
-
 
           if(firstTime == true){
 
@@ -647,26 +580,13 @@ class Scene(private val window: GameWindow) {
 
               firstTime = false
 
-
-
         }
-
 
           enemys.forEach { it?.render(standardShader!!) }
           player?.render(standardShader!!)
           ground!!.render(standardShader!!)
 
-
-
           bulletTest?.render(standardShader!!)
-
-
-
-
-
-
-
-
 
         //Skybox render
         glDepthFunc(GL_LEQUAL)
@@ -674,13 +594,12 @@ class Scene(private val window: GameWindow) {
         skyboxShader.use()
         cam.bind(skyboxShader)
         skyboxShader.setUniformMat("view_sky", Matrix4f(Matrix3f(cam.getCalculateViewMatrix())), false)
-        skyboxtex.bind(10)
+         skyboxtex.bind(10)
         skyboxShader.setUniformInt("sky", 10)
         skyboy?.render(skyboxShader)
         skyboxtex.unbind()
         glEnable(GL_CULL_FACE)
         GL11.glDepthFunc(GL_LESS)
-
     }
 
     fun update(dt: Float, t: Float) {
