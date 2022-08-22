@@ -114,6 +114,12 @@ class Scene(private val window: GameWindow) {
     private var wall1 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var wall2 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
     private var wall3 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+
+    private var wall4 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var wall5 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var wall6 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+    private var wall7 : Renderable? = ModelLoader.loadModel("assets/Among Us/among us.obj", 0f, 0f, 0f)
+
     private var stone : Renderable? = ModelLoader.loadModel("assets/models/Level/boulder.obj", 0f, 0f, 0f)
     private var tree00 : Renderable? = ModelLoader.loadModel("assets/models/Level/tree_raute1.obj", 0f, 0f, 0f)
     private var tree01 : Renderable? = ModelLoader.loadModel("assets/models/Level/tree_raute2.obj", 0f, 0f, 0f)
@@ -233,10 +239,23 @@ class Scene(private val window: GameWindow) {
         wall2?.hitbox = 20f
         wall3?.hitbox = 20f
 
+        wall4?.translate(Vector3f(40f, 0f, 40f))
+        wall5?.translate(Vector3f(-40f, 0f, 40f))
+        wall6?.translate(Vector3f(40f, 0f, -40f))
+        wall7?.translate(Vector3f(-40f, 0f, -40f))
+        wall4?.hitbox = 20f
+        wall5?.hitbox = 20f
+        wall6?.hitbox = 20f
+        wall7?.hitbox = 20f
+
         objects.add(wall0)
         objects.add(wall1)
         objects.add(wall2)
         objects.add(wall3)
+        objects.add(wall4)
+        objects.add(wall5)
+        objects.add(wall6)
+        objects.add(wall7)
 
 
 
